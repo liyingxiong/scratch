@@ -2,6 +2,8 @@
 '''
 from etsproxy.traits.api import \
     HasStrictTraits, Property, cached_property, Float, Int, Instance
+# from enthought.traits.ui.api import \
+#     View, Item
 import numpy as np
 
 class Reinforcement(HasStrictTraits):
@@ -15,6 +17,8 @@ class Reinforcement(HasStrictTraits):
     '''the modulus of elasticity of reinforcement'''
     xi = Float
     '''breaking strain of the reinforcement'''
+    v_f = Float
+    '''volume fraction of the reinforcement'''
     
 
 class CompositeCrackBridge(HasStrictTraits):    
@@ -73,11 +77,18 @@ class CompositeCrackBridge(HasStrictTraits):
         return self.stress_arr / self.reinforcement.E_r
     
     w = Property(depends_on='+l_input, sigma, reinforcement')
+    '''integrates strain along the reinforcement'''
     def _get_w(self):
-        '''integrate strain along the reinforcement'''
         w = np.trapz(self.strain_arr, x=self.coord[0])
 #        print w
         return w
+    
+    stress_m_arr = Property(depends_on='+l_input, sigma, reinforcement')
+    '''evaluates the stress profile of the matrix'''
+    def _get_stress_m_arr(self):
+        ratio = self.reinforcement.v_f / (1 - self.reinforcement.v_f)
+        return np.ones_like(self.stress_arr)*self.sigma*ratio - \
+               self.stress_arr*ratio
     
     
 class CrackBridgeShow(HasStrictTraits):
@@ -116,24 +127,24 @@ if __name__ == '__main__':
     reinf = Reinforcement(r=1.,
                           tau=0.5,
                           E_r=100.,
-                          xi=100.)
+                          xi=100.,
+                          v_f=0.1)
     
-#     CCBridge = CompositeCrackBridge(reinforcement=reinf,
-#                                    sigma=10.,
-#                                    l_left=10.,
-#                                    l_free=2.,
-#                                    l_right=12.)
+    CCBridge = CompositeCrackBridge(reinforcement=reinf,
+                                   sigma=10.,
+                                   l_left=10.,
+                                   l_free=2.,
+                                   l_right=12.)
 #     CCBridge.w
 #     print CCBridge.w
-    CBShow = CrackBridgeShow(sigma_max=20.,
-                             n_step=100)
-    
-    CBShow.w_arr
+#     CBShow = CrackBridgeShow(sigma_max=20.,
+#                              n_step=100)
+#     CBShow.w_arr
     from matplotlib import pyplot as plt
-#     plt.plot(CCBridge.coord[0], CCBridge.stress_arr)
-    plt.figure(figsize=(8,6))
-    plt.plot(CBShow.loading_arr, CBShow.w_arr, linewidth=2)
-    plt.xlabel('Stress')
-    plt.ylabel('Crack Width')
+    plt.plot(CCBridge.coord[0], CCBridge.stress_m_arr)
+#     plt.figure(figsize=(8,6))
+#     plt.plot(CBShow.loading_arr, CBShow.w_arr, linewidth=2)
+#     plt.xlabel('Stress')
+#     plt.ylabel('Crack Width')
     plt.show()
     
