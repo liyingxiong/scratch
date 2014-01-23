@@ -1,7 +1,7 @@
 '''
 '''
 from etsproxy.traits.api import \
-    HasStrictTraits, Property, cached_property, Float, Int, Instance
+    HasStrictTraits, Property, cached_property, Float, Int, Instance, Array
 # from enthought.traits.ui.api import \
 #     View, Item
 import numpy as np
@@ -25,16 +25,19 @@ class CompositeCrackBridge(HasStrictTraits):
     
     reinforcement = Instance(Reinforcement)
     
-    sigma = Float(input=True)
+    sigma_matrix = Float
     '''the given load'''
     w = Float
     '''the crack width'''
 #     E_m = Float
 #     '''the modulus of elasticity of matrix'''
-    l_left = Float(l_input=True)
-    l_free = Float(l_input=True)
+    position = Float
+    '''the global coordinate of the crack plane'''
+    coord_left = Array(l_input=True)
+    coord_free = Array(l_input=True)
     '''the free length of the reinforcement'''
-    l_right = Float(l_input=True)
+    coord_right = Array(l_input=True)
+    
 
     t = Property(Float, depends_on='reinforcement')
     '''the bond intensity'''
@@ -42,34 +45,46 @@ class CompositeCrackBridge(HasStrictTraits):
     def _get_t(self):
         return 2 * self.reinforcement.tau / self.reinforcement.r
     
-    coord = Property(depends_on='+l_input')
-    '''defines the coordinates of the points for evaluation and plotting'''
-    @cached_property
-    def _get_coord(self):
-        length = self.l_left + self.l_right
-        n_p = 100
-        interval = length/(n_p - 1)
-        coordinate = np.array(np.linspace(0, length, n_p))
-        l_left_db = self.l_left - self.l_free/2
-        '''the debonding length in the left'''
-        coord_left = coordinate[: l_left_db/interval + 1]
-        coord_free = coordinate[l_left_db/interval + 1: \
-                                (l_left_db + self.l_free)/interval + 1]
-        coord_right = coordinate[(l_left_db + self.l_free)/interval + 1: ]
-        return coordinate, coord_left, coord_free, coord_right       
+#     ratio = Property(depens_on='reinforcement')
+#     '''the ratio of reinforcement volume to matrix volume'''
+#     @cached_property
+#     def _get_ratio(self):
+#         return self.reinforcement.v_f / (1 - self.reinforcement.v_f)
     
-    stress_arr = Property(depends_on='sigma, reinforcement')
+    sigma = Property(Float, depends_on='reinforcement, sigma_matrix')
+    '''the stress in reinforcement at the crack plane'''
+    @cached_property
+    def _get_sigma(self):
+        ratio = self.reinforcement.v_f / (1 - self.reinforcement.v_f)
+        return self.sigma_matrix / ratio
+    
+#     coord = Property(depends_on='+l_input')
+#     @cached_property
+#     def _get_coord(self):
+#         length = self.l_left + self.l_right
+#         n_p = 100
+#         interval = length/(n_p - 1)
+#         coordinate = np.array(np.linspace(0, length, n_p))
+#         l_left_db = self.l_left - self.l_free/2
+#         '''the debonding length in the left'''
+#         coord_left = coordinate[: l_left_db/interval + 1]
+#         coord_free = coordinate[l_left_db/interval + 1: \
+#                                 (l_left_db + self.l_free)/interval + 1]
+#         coord_right = coordinate[(l_left_db + self.l_free)/interval + 1: ]
+#         return coordinate, coord_left, coord_free, coord_right       
+    
+    stress_arr = Property(depends_on='sigma, reinforcement, +l_input')
     '''evaluates stress in the reinforcement on each point'''
     def _get_stress_arr(self):
-        sigma_left = np.ones_like(self.coord[1])*self.sigma + \
-             (self.coord[1] - np.ones_like(self.coord[1])* \
-             (self.l_left - self.l_free/2))*self.t
-        sigma_free = np.ones_like(self.coord[2]) * self.sigma
-        sigma_right = np.ones_like(self.coord[3])*self.sigma - \
-             (self.coord[3] - np.ones_like(self.coord[3])* \
-             (self.l_left +self.l_free/2))*self.t
+        sigma_left = np.ones_like(self.coord_left)*self.sigma + \
+             (self.coord_left - np.ones_like(self.coord_left)* \
+              self.coord_free[0])*self.t
+        sigma_free = np.ones_like(self.coord_free) * self.sigma
+        sigma_right = np.ones_like(self.coord_right)*self.sigma - \
+             (self.coord_right - np.ones_like(self.coord_right)* \
+              self.coord_free[-1])*self.t
         crude = np.hstack([sigma_left, sigma_free, sigma_right])
-        return crude.clip(min=0)
+        return crude.clip(min=0)  
     
     strain_arr = Property(depends_on='sigma, reinforcement')
     '''evaluates strain in the reinforcement on each point'''
@@ -118,9 +133,7 @@ class CrackBridgeShow(HasStrictTraits):
                              l_right=12.)
             w_arr.append(CCB.w)
         return np.array(w_arr)
-            
-        
-    
+                
     
 if __name__ == '__main__':
     
@@ -129,19 +142,22 @@ if __name__ == '__main__':
                           E_r=100.,
                           xi=100.,
                           v_f=0.1)
-    
+    left = np.linspace(5, 15, 11)
+    free = [16.,]
+    right = np.linspace(17, 25, 9)
     CCBridge = CompositeCrackBridge(reinforcement=reinf,
-                                   sigma=10.,
-                                   l_left=10.,
-                                   l_free=2.,
-                                   l_right=12.)
+                                   sigma_matrix=0.9,
+                                   coord_left=left,
+                                   coord_free=free,
+                                   coord_right=right)
+    x_coord = np.hstack([CCBridge.coord_left, CCBridge.coord_free, CCBridge.coord_right])
 #     CCBridge.w
 #     print CCBridge.w
 #     CBShow = CrackBridgeShow(sigma_max=20.,
 #                              n_step=100)
 #     CBShow.w_arr
     from matplotlib import pyplot as plt
-    plt.plot(CCBridge.coord[0], CCBridge.stress_m_arr)
+    plt.plot(x_coord, CCBridge.stress_m_arr)
 #     plt.figure(figsize=(8,6))
 #     plt.plot(CBShow.loading_arr, CBShow.w_arr, linewidth=2)
 #     plt.xlabel('Stress')
