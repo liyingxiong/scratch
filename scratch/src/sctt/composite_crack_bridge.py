@@ -25,7 +25,7 @@ class CompositeCrackBridge(HasStrictTraits):
     
     reinforcement = Instance(Reinforcement)
     
-    sigma_matrix = Float
+    sigma_matrix = Float(input=True)
     '''the given load'''
     w = Float
     '''the crack width'''
@@ -51,7 +51,7 @@ class CompositeCrackBridge(HasStrictTraits):
 #     def _get_ratio(self):
 #         return self.reinforcement.v_f / (1 - self.reinforcement.v_f)
     
-    sigma = Property(Float, depends_on='reinforcement, sigma_matrix')
+    sigma = Property(Float, depends_on='reinforcement, input')
     '''the stress in reinforcement at the crack plane'''
     @cached_property
     def _get_sigma(self):
@@ -94,7 +94,9 @@ class CompositeCrackBridge(HasStrictTraits):
     w = Property(depends_on='+l_input, sigma, reinforcement')
     '''integrates strain along the reinforcement'''
     def _get_w(self):
-        w = np.trapz(self.strain_arr, x=self.coord[0])
+        xcoord = np.hstack( \
+                [self.coord_left, self.coord_free, self.coord_right])
+        w = np.trapz(self.strain_arr, x=xcoord)
 #        print w
         return w
     
@@ -102,38 +104,38 @@ class CompositeCrackBridge(HasStrictTraits):
     '''evaluates the stress profile of the matrix'''
     def _get_stress_m_arr(self):
         ratio = self.reinforcement.v_f / (1 - self.reinforcement.v_f)
-        return np.ones_like(self.stress_arr)*self.sigma*ratio - \
+        return np.ones_like(self.stress_arr)*self.sigma_matrix - \
                self.stress_arr*ratio
     
     
-class CrackBridgeShow(HasStrictTraits):
-    '''plots the load-crack width curve'''
-    
-#     crack = Instance(CompositeCrackBridge)
-    sigma_max = Float(input=True)
-    '''maximum loading level'''
-    n_step = Int(input=True)
-    '''number of loading steps'''
-    
-    loading_arr = Property(depends_on='+input')
-    '''defines the loading steps'''
-    @cached_property
-    def _get_loading_arr(self):
-        return np.linspace(0, self.sigma_max, self.n_step)
-    
-    w_arr = Property(depends_on='crack, +input')
-    '''evaluate the array contains the crack widths'''
-    def _get_w_arr(self):
-        w_arr = []
-        for loading in self.loading_arr:
-            CCB = CompositeCrackBridge(reinforcement=reinf,
-                             sigma=loading,
-                             l_left=10.,
-                             l_free=2.,
-                             l_right=12.)
-            w_arr.append(CCB.w)
-        return np.array(w_arr)
-                
+# class CrackBridgeShow(HasStrictTraits):
+#     '''plots the load-crack width curve'''
+#      
+# #     crack = Instance(CompositeCrackBridge)
+#     sigma_max = Float(input=True)
+#     '''maximum loading level'''
+#     n_step = Int(input=True)
+#     '''number of loading steps'''
+#      
+#     loading_arr = Property(depends_on='+input')
+#     '''defines the loading steps'''
+#     @cached_property
+#     def _get_loading_arr(self):
+#         return np.linspace(0, self.sigma_max, self.n_step)
+#      
+#     w_arr = Property(depends_on='crack, +input')
+#     '''evaluate the array contains the crack widths'''
+#     def _get_w_arr(self):
+#         w_arr = []
+#         for loading in self.loading_arr:
+#             CCB = CompositeCrackBridge(reinforcement=reinf,
+#                              sigma=loading,
+#                              l_left=10.,
+#                              l_free=2.,
+#                              l_right=12.)
+#             w_arr.append(CCB.w)
+#         return np.array(w_arr)
+                 
     
 if __name__ == '__main__':
     
@@ -142,9 +144,9 @@ if __name__ == '__main__':
                           E_r=100.,
                           xi=100.,
                           v_f=0.1)
-    left = np.linspace(5, 15, 11)
-    free = [16.,]
-    right = np.linspace(17, 25, 9)
+    left = []
+    free = np.array([0.,])
+    right = np.linspace(1, 25, 90)
     CCBridge = CompositeCrackBridge(reinforcement=reinf,
                                    sigma_matrix=0.9,
                                    coord_left=left,
@@ -157,7 +159,7 @@ if __name__ == '__main__':
 #                              n_step=100)
 #     CBShow.w_arr
     from matplotlib import pyplot as plt
-    plt.plot(x_coord, CCBridge.stress_m_arr)
+    plt.plot(x_coord, CCBridge.strain_arr)
 #     plt.figure(figsize=(8,6))
 #     plt.plot(CBShow.loading_arr, CBShow.w_arr, linewidth=2)
 #     plt.xlabel('Stress')
