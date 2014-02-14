@@ -45,7 +45,7 @@ class RandomField(HasTraits):
     interval = Property(Float, depends_on='+field')
     @cached_property
     def _get_interval(self):
-        return self.length / self.n_p
+        return self.length/(self.n_p - 1)
     
     scale_gridpoints = Property(depends_on='scale, lacor, xgrid')
     @cached_property

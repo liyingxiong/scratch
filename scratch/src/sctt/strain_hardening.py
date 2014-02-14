@@ -7,9 +7,10 @@ from composite_crack_bridge import \
 from random_field_1D import \
     RandomField
 import numpy as np
-from scipy.optimize import brentq
+from scipy.optimize import brentq, minimize
 import copy
 from matplotlib import pyplot as plt
+import time as t
 
 
 class StrainHardening(HasStrictTraits):
@@ -49,6 +50,7 @@ class StrainHardening(HasStrictTraits):
                         [crack[1] + 1: crack[2] / interval + 1]
                 crack_bridge = CompositeCrackBridge(reinforcement=self.reinf,
                                                     sigma_matrix=load,
+                                                    E_m=10.,
                                                     coord_left=left,
                                                     coord_free=free,
                                                     coord_right=right)
@@ -63,8 +65,7 @@ class StrainHardening(HasStrictTraits):
     def find_cracks(self, stress):
         '''compare the stress and strength of matrix to get the cracks'''
         redundance = self.matrix_strength.random_field - stress
-#         print np.where(redundance < 0)[0]
-        return np.where(redundance < 0)[0]
+        return np.where(redundance <= 0)[0]
 
     def n_cracks(self, sigma_p):
         '''check the number of new cracks under certain load level'''
@@ -95,7 +96,7 @@ class StrainHardening(HasStrictTraits):
                 (xgrid[new_crack[1]] + xgrid[r_crack[1]]) / 2
                 current_arr[1][0] = current_arr[posi][2]
         elif posi == len(current_arr) - 1:
-            '''the new crack if the right-most and not the only crack'''
+            '''the new crack is the right-most and not the only crack'''
             l_crack = current_arr[posi - 1]
             current_arr[posi][0] = \
             (xgrid[new_crack[1]] + xgrid[l_crack[1]]) / 2
@@ -112,27 +113,121 @@ class StrainHardening(HasStrictTraits):
             current_arr[posi + 1][0] = current_arr[posi][2]
         return current_arr
 
+    def constraint(self, sigma_p):
+        '''constraint function for optimization'''
+#         tr = np.any(self.matrix_strength.random_field== \
+#             self.evaluate_matrix(sigma_p)[0])
+        residuum = np.max(self.evaluate_matrix_opt(sigma_p)[0] - \
+                          self.matrix_strength.random_field)
+        return residuum
+
+    def evaluate_matrix_opt(self, load):
+        '''evaluates the stress and cracks in matrix, strain in reinforcement'''
+#         if type(load) is np.ndarray:
+        load = load[0]
+        if len(self.crack_arr) == 0:
+            matrix_stress = np.ones_like(self.matrix_strength.random_field) * load
+            crack_width = []
+            avg_strain = 0.
+        else:
+            matrix_stress = np.array([])
+            crack_width = []
+            reinf_strain = np.array([])
+            interval = self.matrix_strength.interval
+            for crack in self.crack_arr:
+                left = self.matrix_strength.xgrid[crack[0] / interval + 1: crack[1]]
+                if crack[0] == 0. and crack[1] != 0.:
+                    '''manually add the point(x=0)'''
+                    left = np.append(0., left)
+                free = np.array([self.matrix_strength.xgrid[crack[1]]])
+                right = self.matrix_strength.xgrid \
+                        [crack[1] + 1: crack[2] / interval + 1]
+                crack_bridge = CompositeCrackBridge(reinforcement=self.reinf,
+                                                    sigma_matrix=load,
+                                                    E_m=10.,
+                                                    coord_left=left,
+                                                    coord_free=free,
+                                                    coord_right=right)
+                matrix_stress = np.append(matrix_stress, \
+                                          crack_bridge.stress_m_arr)
+                crack_width.append(crack_bridge.w)
+                reinf_strain = np.append(reinf_strain, crack_bridge.strain_arr)
+            avg_strain = np.trapz(reinf_strain, \
+                    self.matrix_strength.xgrid) / self.matrix_strength.length
+        return matrix_stress, crack_width, avg_strain
+
+
     load_steps = Property(depends_on='+load_input, matrix_strength')
     '''defines load steps and evaluate crack distribution'''
     @cached_property
     def _get_load_steps(self):
-        steps = np.linspace(np.amin(self.matrix_strength.random_field) - 0.1, \
-                            self.max_load, 200)
+        steps = np.linspace(0, self.max_load, 200)
+
+        crack_dict_2 = {}
+        crack_load_list_2 = []
+        crack_load = 0.
+        fun = lambda x: x
+        cons = {'type':'ineq', 'fun': self.constraint}
+        s2 = t.clock()
+        while np.any(self.evaluate_matrix(self.max_load)[0] > \
+                     self.matrix_strength.random_field):
+#             new_crack = []
+#             while len(new_crack) == 0:
+            crack_load = minimize(fun, crack_load, \
+                            method='COBYLA', constraints=cons).fun
+            new_crack = self.find_cracks(\
+                        self.evaluate_matrix(crack_load)[0])
+            crack_load_list_2.append(crack_load)
+            self.crack_arr = self.update_crack_arr(self.crack_arr, new_crack)
+            crack_dict_2[crack_load] = copy.copy(self.crack_arr)
+        print 'method 2 time:', t.clock() - s2
+        print crack_load_list_2
+
+        self.crack_arr = np.array([]).reshape(0, 3)
+
         crack_dict = {}
         crack_load_list = []
         crack_load = 0.
+        s1 = t.clock()
         while np.any(self.evaluate_matrix(self.max_load)[0] > \
                      self.matrix_strength.random_field):
             crack_load = self.next_load(crack_load)
-#             print crack_load
             crack_load_list.append(crack_load)
             new_crack = self.find_cracks(\
                         self.evaluate_matrix(crack_load)[0])
 #             print self.crack_arr
             self.crack_arr = self.update_crack_arr(self.crack_arr, new_crack)
-#             print 'updated:' 
-#             print self.crack_arr
             crack_dict[crack_load] = copy.copy(self.crack_arr)
+        print 'method 1 time:', t.clock() - s1
+        print crack_load_list
+
+        self.crack_arr = np.array([]).reshape(0, 3)
+
+        crack_dict_3 = {}
+        crack_load_list_3 = []
+        crack_load = 0.
+        s3 = t.clock()
+        while np.any(self.evaluate_matrix(self.max_load)[0] > \
+                     self.matrix_strength.random_field):
+            min_load = crack_load
+            max_load = self.max_load
+            while self.n_cracks(crack_load) != 0:
+                crack_load = (max_load + min_load) / 2
+                if self.n_cracks(crack_load) < 0:
+                    min_load = crack_load
+                else:
+                    max_load = crack_load
+            crack_load_list_3.append(crack_load)
+            new_crack = self.find_cracks(\
+                        self.evaluate_matrix(crack_load)[0])
+#             print self.crack_arr
+            self.crack_arr = self.update_crack_arr(self.crack_arr, new_crack)
+            crack_dict_3[crack_load] = copy.copy(self.crack_arr)
+        print 'method 3 time:', t.clock() - s3
+        print crack_load_list_3
+
+
+
         loadsteps = np.sort(np.hstack([steps, np.array(crack_load_list)]))
         return loadsteps, crack_dict
 
@@ -179,6 +274,8 @@ if __name__ == '__main__':
     test = StrainHardening(matrix_strength=r_f,
                            max_load=0.7,
                            reinf=reinforcement)
+    print np.amin(test.matrix_strength.random_field)
+    test.load_steps
 
     strain = test.evaluate()
     stress = test.load_steps[0]

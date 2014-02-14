@@ -25,12 +25,12 @@ class CompositeCrackBridge(HasStrictTraits):
     
     reinforcement = Instance(Reinforcement)
     
-    sigma_matrix = Float(input=True)
+    sigma_matrix = Float(p_input=True)
     '''the given load'''
     w = Float
     '''the crack width'''
-#     E_m = Float
-#     '''the modulus of elasticity of matrix'''
+    E_m = Float(p_input=True)
+    '''the modulus of elasticity of matrix'''
     position = Float
     '''the global coordinate of the crack plane'''
     coord_left = Array(l_input=True)
@@ -51,12 +51,12 @@ class CompositeCrackBridge(HasStrictTraits):
 #     def _get_ratio(self):
 #         return self.reinforcement.v_f / (1 - self.reinforcement.v_f)
     
-    sigma = Property(Float, depends_on='reinforcement, input')
+    sigma = Property(Float, depends_on='reinforcement, +p_input')
     '''the stress in reinforcement at the crack plane'''
     @cached_property
     def _get_sigma(self):
-        ratio = self.reinforcement.v_f / (1 - self.reinforcement.v_f)
-        return self.sigma_matrix / ratio
+        ratio = (1 - self.reinforcement.v_f) / self.reinforcement.v_f
+        return self.sigma_matrix * (ratio + self.reinforcement.E_r/self.E_m)
     
 #     coord = Property(depends_on='+l_input')
 #     @cached_property
@@ -73,7 +73,7 @@ class CompositeCrackBridge(HasStrictTraits):
 #         coord_right = coordinate[(l_left_db + self.l_free)/interval + 1: ]
 #         return coordinate, coord_left, coord_free, coord_right       
     
-    stress_arr = Property(depends_on='sigma, reinforcement, +l_input')
+    stress_arr = Property(depends_on='sigma_matrix, reinforcement, +l_input')
     '''evaluates stress in the reinforcement on each point'''
     def _get_stress_arr(self):
         sigma_left = np.ones_like(self.coord_left)*self.sigma + \
@@ -84,14 +84,15 @@ class CompositeCrackBridge(HasStrictTraits):
              (self.coord_right - np.ones_like(self.coord_right)* \
               self.coord_free[-1])*self.t
         crude = np.hstack([sigma_left, sigma_free, sigma_right])
-        return crude.clip(min=0)  
+        min_stress = self.reinforcement.E_r * self.sigma_matrix / self.E_m
+        return crude.clip(min=min_stress)  
     
-    strain_arr = Property(depends_on='sigma, reinforcement')
+    strain_arr = Property(depends_on='sigma_matrix, reinforcement')
     '''evaluates strain in the reinforcement on each point'''
     def _get_strain_arr(self):
         return self.stress_arr / self.reinforcement.E_r
     
-    w = Property(depends_on='+l_input, sigma, reinforcement')
+    w = Property(depends_on='+l_input, sigma_matrix, reinforcement')
     '''integrates strain along the reinforcement'''
     def _get_w(self):
         xcoord = np.hstack( \
@@ -100,12 +101,13 @@ class CompositeCrackBridge(HasStrictTraits):
 #        print w
         return w
     
-    stress_m_arr = Property(depends_on='+l_input, sigma, reinforcement')
+    stress_m_arr = Property(depends_on='+l_input, sigma_matrix, reinforcement')
     '''evaluates the stress profile of the matrix'''
     def _get_stress_m_arr(self):
         ratio = self.reinforcement.v_f / (1 - self.reinforcement.v_f)
+        min_stress = self.reinforcement.E_r * self.sigma_matrix / self.E_m
         return np.ones_like(self.stress_arr)*self.sigma_matrix - \
-               self.stress_arr*ratio
+               (self.stress_arr-np.ones_like(self.stress_arr)*min_stress)*ratio
     
     
 # class CrackBridgeShow(HasStrictTraits):
@@ -149,6 +151,7 @@ if __name__ == '__main__':
     right = np.linspace(1, 25, 90)
     CCBridge = CompositeCrackBridge(reinforcement=reinf,
                                    sigma_matrix=0.9,
+                                   E_m=10.,                                   
                                    coord_left=left,
                                    coord_free=free,
                                    coord_right=right)
@@ -159,7 +162,7 @@ if __name__ == '__main__':
 #                              n_step=100)
 #     CBShow.w_arr
     from matplotlib import pyplot as plt
-    plt.plot(x_coord, CCBridge.strain_arr)
+    plt.plot(x_coord, CCBridge.stress_m_arr)
 #     plt.figure(figsize=(8,6))
 #     plt.plot(CBShow.loading_arr, CBShow.w_arr, linewidth=2)
 #     plt.xlabel('Stress')
