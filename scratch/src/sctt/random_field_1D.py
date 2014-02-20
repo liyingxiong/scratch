@@ -115,7 +115,7 @@ if __name__ == '__main__':
                      mean = 0.25, 
                      stdev = .1,
                      length = 100.,
-                     n_p = 1001)
+                     n_p = 501)
     x = rf.xgrid
     rf.distribution = 'Weibull'
     rf.loc = .0
