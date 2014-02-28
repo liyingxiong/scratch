@@ -8,12 +8,14 @@ from random_field_1D import RandomField
 from scipy.optimize import brentq
 import copy
 from matplotlib import pyplot as plt
+from interpolater import CrackBridge, Interpolater
 
 
 
 class CompositeTensileTest(HasStrictTraits):
     
     rfield = Instance(RandomField)
+    interp = Instance(Interpolater)
     
     xgrid = Property(depends_on='rfield')
     @cached_property
@@ -27,6 +29,7 @@ class CompositeTensileTest(HasStrictTraits):
     
     crack_list = List
     t = Float
+    '''t is the bond intensity for matrix, t=v_r/(1-v_r)*T'''
     maxload = Float
     E_r = Float(1000.)
     E_m = Float(100.)
@@ -51,15 +54,18 @@ class CompositeTensileTest(HasStrictTraits):
             distance = abs(self.xgrid[:, None] - \
                            np.array(self.crack_list)[None, :])
             min_distance = np.amin(distance, axis=1)
-            field = load - self.t*(load/self.t - min_distance)* \
-                    self.heaviside(load/self.t - min_distance)
+#             field = load - self.t*(load/self.t - min_distance)* \
+#                     self.heaviside(load/self.t - min_distance)
+#             field = self.t*min_distance* \
+#             self.heaviside(load/self.t - min_distance) + \
+#             load*self.heaviside(min_distance - load/self.t)
+            field = self.interp.interpolate(min_distance, load)
+#             if (field != field2).any():
+#                 plt.plot(self.xgrid, field - field2)
+# #                 plt.plot(self.xgrid, field2)
+#                 plt.show()
         else:
             field = np.ones_like(self.xgrid)*load
-#         if self.crack_list:
-#             i = 0
-#             for x in self.xgrid:
-#                 field[i] = self.matrix_stress(x, load)
-#                 i += 1
         return field
     
     def matrix_strain_field(self, mstress):
@@ -77,7 +83,7 @@ class CompositeTensileTest(HasStrictTraits):
         possible = np.where(self.mstrength <= maxstress)[0]
         fun = lambda load: min(self.mstrength[possible] - \
                                self.matrix_stress_field(load)[possible])            
-        lam_min = brentq(fun, load, self.maxload)
+        lam_min = brentq(fun, load, self.maxload) + 1e-14
         crack = self.xgrid[np.where(self.matrix_stress_field(lam_min) >= \
                                     self.mstrength)[0][0]]
         self.crack_list.append(crack)
@@ -170,9 +176,12 @@ class CompositeTensileTest(HasStrictTraits):
         return width_arr
     
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
 
-def test():
+# def test():
+    CB = CrackBridge()
+    
+    interpolater = Interpolater(cb=CB)
     
     r_f = RandomField(lacor = 1, 
                      mean = 0.5, 
@@ -181,6 +190,7 @@ def test():
                      n_p = 1001)
 
     ctt = CompositeTensileTest(rfield=r_f,
+                               interp=interpolater,
                                t=0.1,
                                crack_list=[],
                                maxload=0.7)
@@ -201,8 +211,8 @@ def test():
     cra = fig.add_subplot(313, xlabel='Crack Width', ylabel='Number')
     cra.hist(crack_arr, bins=20)
     plt.subplots_adjust(left=0.1, right=0.9, bottom= 0.05, top=0.95, hspace=0.5)
-#     plt.show()
+    plt.show()
     
-import cProfile
-
-cProfile.run('test()', sort=1)
+# import cProfile
+# 
+# cProfile.run('test()', sort=1)
