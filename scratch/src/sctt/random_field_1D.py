@@ -123,7 +123,7 @@ if __name__ == '__main__':
     rf.scale = .6
     p.plot(x, rf.random_field, lw = 2, color = 'black')
     rf.distribution = 'Gauss'
-    #p.plot(x, rf.random_field, lw = 2, label = 'Gauss')
-    #p.legend(loc = 'best')
+    p.plot(x, rf.random_field, lw = 2, label = 'Gauss')
+    p.legend(loc = 'best')
     p.ylim(0)
     p.show()

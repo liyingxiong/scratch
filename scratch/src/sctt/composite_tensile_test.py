@@ -9,7 +9,13 @@ from scipy.optimize import brentq
 import copy
 from matplotlib import pyplot as plt
 from interpolater import CrackBridge, Interpolater
-
+from quaducom.meso.homogenized_crack_bridge.elastic_matrix.hom_CB_elastic_mtrx \
+    import CompositeCrackBridge
+from quaducom.meso.homogenized_crack_bridge.elastic_matrix.reinforcement \
+    import ContinuousFibers
+from stats.pdistrib.weibull_fibers_composite_distr import \
+    WeibullFibers, fibers_MC
+from spirrid.rv import RV
 
 
 class CompositeTensileTest(HasStrictTraits):
@@ -26,14 +32,25 @@ class CompositeTensileTest(HasStrictTraits):
     @cached_property
     def _get_mstrength(self):
         return self.rfield.random_field
-    
     crack_list = List
-    t = Float
-    '''t is the bond intensity for matrix, t=v_r/(1-v_r)*T'''
+#     t = Float
+#     '''t is the bond intensity for matrix, t=v_r/(1-v_r)*T'''
     maxload = Float
-    E_r = Float(1000.)
-    E_m = Float(100.)
-    v_r = Float(0.1)
+    E_r = Property(depends_on='interp')
+    @cached_property
+    def _get_E_r(self):
+        E_r = 0
+        for reinf in self.interp.cb.ccb.reinforcement_lst:
+            E_r += reinf.E_f*reinf.V_f/self.interp.cb.ccb.V_f_tot
+        return E_r
+    E_m = Property(depends_on='interp')
+    @cached_property
+    def _get_E_m(self):
+        return self.interp.cb.ccb.E_m
+    v_r = Property(depends_on='interp')
+    @cached_property
+    def _get_v_r(self):
+        return self.interp.cb.ccb.V_f_tot
     
     @staticmethod
     def heaviside(x):
@@ -72,8 +89,14 @@ class CompositeTensileTest(HasStrictTraits):
         return mstress / self.E_m
     
     def reinf_strain_field(self, load, mstress):
-        rstress = np.ones_like(self.xgrid)*self.E_r/self.E_m*load + \
-            (np.ones_like(self.xgrid)*load - mstress)*(1 -self.v_r)/self.v_r
+        damage = self.interp.interp_damage(load)
+        load = np.ones_like(self.xgrid)*load
+#         rstress = np.ones_like(self.xgrid)*self.E_r/self.E_m*load + \
+#             (np.ones_like(self.xgrid)*load - mstress)*(1 -self.v_r)/self.v_r
+        rstress = load*self.E_r/self.E_m + \
+            (load - mstress)*(1-self.v_r)/(self.v_r*(1-damage)) + \
+            (load - mstress)*self.E_r*damage/(self.E_m*(1 - damage))
+            
         rstrain = rstress/self.E_r
         return rstrain
         
@@ -83,7 +106,7 @@ class CompositeTensileTest(HasStrictTraits):
         possible = np.where(self.mstrength <= maxstress)[0]
         fun = lambda load: min(self.mstrength[possible] - \
                                self.matrix_stress_field(load)[possible])            
-        lam_min = brentq(fun, load, self.maxload) + 1e-14
+        lam_min = brentq(fun, load, self.maxload) + 1e-12
         crack = self.xgrid[np.where(self.matrix_stress_field(lam_min) >= \
                                     self.mstrength)[0][0]]
         self.crack_list.append(crack)
@@ -179,23 +202,42 @@ class CompositeTensileTest(HasStrictTraits):
 if __name__ == '__main__':
 
 # def test():
-    CB = CrackBridge()
+    reinf = ContinuousFibers(r=0.0035,
+                          tau=RV('weibull_min', loc=0.0, shape=3., scale=1.),
+                          V_f=0.01,
+                          E_f=180e3,
+                          xi=fibers_MC(m=3.0, sV0=0.003),
+                          label='carbon',
+                          n_int=100)
+    
+    model = CompositeCrackBridge(E_m=25e3,
+                                 reinforcement_lst=[reinf],
+                                 Ll=50.,
+                                 Lr=50.,
+                                 )
+
+    CB = CrackBridge(ccb=model)
     
     interpolater = Interpolater(cb=CB)
     
     r_f = RandomField(lacor = 1, 
-                     mean = 0.5, 
-                     stdev = .05,
-                     length = 100.,
+                     mean = 20, 
+                     stdev = 2,
+#                      distribution = 'Weibull',
+                     length = 200.,
                      n_p = 1001)
+    
+#     plt.plot(r_f.xgrid, r_f.random_field)
+#     plt.show()
 
     ctt = CompositeTensileTest(rfield=r_f,
                                interp=interpolater,
-                               t=0.1,
+#                                t=0.1,
                                crack_list=[],
-                               maxload=0.7)
+                               maxload=35.)
     
     result = ctt.evaluate_loadsteps()
+#     result = ctt.evaluate()
     strain = ctt.reinf_strain_field(ctt.maxload, result[2])
     crack_arr = ctt.crack_width(strain, result[2])
       

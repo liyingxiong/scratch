@@ -12,27 +12,27 @@ class StrengthField(HasStrictTraits):
 if __name__ == '__main__':
     
     sf = RandomField( lacor = 1.,
-                      mean = 0.25, 
-                      stdev = .1,
+                      mean = 15, 
+                      stdev = 3.,
                       length = 100.,
                       n_p = 501)
 
     
-    sf2 = RandomField( lacor = 1.,
-                      mean = 0.25, 
-                      stdev = .1,
-                      length = 100.,
-                      n_p = 501)
+#     sf2 = RandomField( lacor = 1.,
+#                       mean = 0.25, 
+#                       stdev = .1,
+#                       length = 100.,
+#                       n_p = 501)
 
     
     
     x = sf.xgrid
     y = sf.random_field
-    y2 = sf2.random_field
+#     y2 = sf2.random_field
     sf.configure_traits
     from matplotlib import pyplot as plt
     plt.plot(x,y)
-    plt.plot(x,y2)
+#     plt.plot(x,y2)
     plt.show()
 
 

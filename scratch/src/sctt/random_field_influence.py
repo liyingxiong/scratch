@@ -1,5 +1,5 @@
-
-
+'''
+'''
 from composite_tensile_test import CompositeTensileTest
 from interpolater import CrackBridge, Interpolater
 from matplotlib import pyplot as plt
@@ -18,7 +18,7 @@ l_d2= fig.add_subplot(212, xlabel='strain', ylabel='stress')
 
 field_list = [None]*5
 for field in field_list:
-    field = RandomField(lacor = 1, 
+    field = RandomField(lacor = 30, 
                      mean = 0.5, 
                      stdev = .05,
                      length = 100.,
