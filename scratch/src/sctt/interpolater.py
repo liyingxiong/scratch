@@ -15,6 +15,9 @@ from spirrid.rv import RV
 
 
 class CrackBridge(HasStrictTraits):
+    '''obtain the data for interpolation from the instance of
+    CompositeCrackBridge
+    '''
     
 #     t = Float(0.1)
 #     E_r = Float(1000.)
@@ -48,7 +51,8 @@ class CrackBridge(HasStrictTraits):
             E_f_mean += reinf.E_f*reinf.V_f/self.ccb.V_f_tot
             n_int = reinf.n_int
         w = 1e-15
-        step = 0.001
+        step = 0.0001
+        i = 1.
         while True:
             self.ccb.w = w
             self.ccb.damage
@@ -64,7 +68,8 @@ class CrackBridge(HasStrictTraits):
             sigma_m_list.append(sigma_m)
             damage_list.append(damage)
             epsm_list.append(self.ccb._epsm_arr[n_int+1::])
-            w += step
+            w += i**2*step
+            i += 1.
         epsm_arr = np.array(epsm_list)
         sigm_arr = epsm_arr * self.ccb.E_m
         sigma_m_arr = np.array(sigma_m_list)
@@ -74,6 +79,10 @@ class CrackBridge(HasStrictTraits):
 
 
 class Interpolater(HasStrictTraits):
+    ''' evaluate the stress field of the matrix according the distances and
+    load level, evaluate the portion of damaged filaments according the load
+    level
+    '''
     
     cb = Instance(CrackBridge)
     
@@ -95,6 +104,7 @@ class Interpolater(HasStrictTraits):
         return f_damage
         
     def interpolate(self, distance_arr, load):
+        '''calculate the matrix stress field'''
 #         stress = self.cb.matrix_stress
 #         X = stress[2]
 #         Y = stress[1]
@@ -110,6 +120,7 @@ class Interpolater(HasStrictTraits):
 #         return mat_stress.reshape((-1,len(distance_arr)))[0]
 
     def interp_damage(self, load):
+        '''calculate the damaged portion of filaments'''
         return self.f_damage(load)
         
 if __name__ == '__main__':
@@ -120,10 +131,10 @@ if __name__ == '__main__':
     import time as t
     
     reinf = ContinuousFibers(r=0.0035,
-                          tau=RV('weibull_min', loc=0.0, shape=1.95, scale=1.),
+                          tau=RV('weibull_min', loc=0.0, shape=1., scale=4),
                           V_f=0.01,
                           E_f=180e3,
-                          xi=fibers_MC(m=3, sV0=0.003),
+                          xi=fibers_MC(m=2, sV0=0.003),
                           label='carbon',
                           n_int=100)
      
@@ -141,7 +152,7 @@ if __name__ == '__main__':
 #     distance = np.array([1, 0, 1, 2, 1, 0, 1, 2])
     distance = np.linspace(0, 20, 100)
     ip1 = t.clock()
-    f = interp.interpolate(distance,12)
+    f = interp.interpolate(distance,30)
     print t.clock()-ip1
     
     d2 = np.linspace(0, 20, 1000)
