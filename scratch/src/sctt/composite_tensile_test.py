@@ -179,8 +179,8 @@ class CompositeTensileTest(HasStrictTraits):
         load_record = copy.copy(loadsteps)
         strain_record = np.zeros_like(loadsteps)
         i = 0
-        frame = plt.figure(figsize=(9,4))
-        ax = frame.add_subplot(111)
+#         frame = plt.figure(figsize=(9,4))
+#         ax = frame.add_subplot(111)
         for load in loadsteps:
             m_stress = self.matrix_stress_field(load)
             if np.any(m_stress >= self.mstrength):
@@ -189,14 +189,14 @@ class CompositeTensileTest(HasStrictTraits):
                 load = crack_load
                 load_record[i] = crack_load
 
-            ax.cla()
-            ax.plot(self.xgrid, self.mstrength, \
-                    color='black', label='Strength Field')
-            ax.plot(self.xgrid, m_stress, \
-                    color='blue', label='Stress Field')
-            ax.set_ylim([0.0, 30])
-            filename = 'frame%s.png'%i
-            frame.savefig(filename)
+#             ax.cla()
+#             ax.plot(self.xgrid, self.mstrength, \
+#                     color='black', label='Strength Field')
+#             ax.plot(self.xgrid, m_stress, \
+#                     color='blue', label='Stress Field')
+#             ax.set_ylim([0.0, 30])
+#             filename = 'frame%s.png'%i
+#             frame.savefig(filename)
 
             r_strain = self.reinf_strain_field(load, m_stress)
             avg_strain = np.trapz(r_strain, self.xgrid)/self.xgrid[-1]
