@@ -111,19 +111,21 @@ class RandomField(HasTraits):
 if __name__ == '__main__':
 
     from matplotlib import pyplot as p
-    rf = RandomField(lacor = 3, 
-                     mean = 0.25, 
-                     stdev = .1,
+    
+    rf = RandomField(lacor = 2, 
+                     mean = 25, 
+                     stdev = 1,
                      length = 100.,
-                     n_p = 501)
+                     n_p = 201)
     x = rf.xgrid
-    rf.distribution = 'Weibull'
-    rf.loc = .0
-    rf.shape = 80.
-    rf.scale = .6
+#     rf.distribution = 'Weibull'
+#     rf.loc = .0
+#     rf.shape = 80.
+#     rf.scale = .6
     p.plot(x, rf.random_field, lw = 2, color = 'black')
-    rf.distribution = 'Gauss'
-    p.plot(x, rf.random_field, lw = 2, label = 'Gauss')
-    p.legend(loc = 'best')
-    p.ylim(0)
+#     rf.distribution = 'Gauss'
+#     p.plot(x, rf.random_field, lw = 2, label = 'Gauss')
+#     p.legend(loc = 'best')
+#     p.ylim(0)
+    print [rf.random_field]
     p.show()
