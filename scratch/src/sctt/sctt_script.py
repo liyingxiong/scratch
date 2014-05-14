@@ -37,7 +37,11 @@ get_eps_f_z = interp2d(cb_z, cb_sig_c, cb_eps_f, kind='linear')
 n_x = 1000  #
 L = 1000.0  # length - mm
 x = np.linspace(0, L, n_x)
-sig_mu_x = np.linspace(30, 35, n_x)
+#Gaussian filter for the random field
+f_arr = np.linspace(-5, 5, 51)
+filter_ = np.exp(-1.*(f_arr**2/10))/np.sum(np.exp(-1.*(f_arr**2/10)))
+#specimen strength field
+sig_mu_x = 30 + 5*np.convolve(np.random.randn(n_x), filter_, mode='same')
 max_sig_mu = np.max(sig_mu_x)
 max_lambda = sig_cu
 
