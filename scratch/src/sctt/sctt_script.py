@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 T = 8.  # [MPa]
 E_m = 25e+3  # [MPa]
 E_f = 180e+3  # [MPa]
-v_f = 0.01  # [-]
+v_f = 0.04  # [-]
 sig_fu = 1.8e+3  # [MPa]
 eps_fu = sig_fu / E_f  # ultimate fiber strain
 sig_cu = sig_fu * v_f  # ultimate composite stress
