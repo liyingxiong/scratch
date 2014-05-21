@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.interpolate import interp2d
+from scipy.interpolate import interp2d, interp1d
 from scipy.optimize import brentq
 from matplotlib import pyplot as plt
 
@@ -73,7 +73,7 @@ def get_z_x(x, y_i):
     return np.amin(z_grid, axis=1)
 
 def get_LL_x(x, y_lst):
-    '''Derive the boundary conditions for each crack.
+    '''Derive the boundary conditions for each material point.
     '''
     y = np.array(y_lst)
     # todo: handle the sorting of the crack positions
@@ -89,6 +89,17 @@ def get_LL_x(x, y_lst):
     ranges = np.logical_or(left_ranges, right_ranges)
     row_idx = np.where(ranges)[0]
     return np.vstack([-L_left[row_idx], L_right[row_idx]])
+
+def get_L_x(x, y_lst):
+    '''Derive the boundary conditions for each material point.
+    '''
+    y = np.sort(y_lst)
+    d = (y[1:] - y[:-1]) / 2.0
+    xp = np.sort(np.hstack([0, y[:-1]+d, y, x[-1]]))
+    Lp = np.hstack([y[0], np.repeat(d, 2), L-y[-1], np.NAN])
+    f = interp1d(xp, Lp, kind='zero')
+    return f(x)
+    
 
 def get_cracking_history():
     '''Trace the response crack by crack.
@@ -138,34 +149,34 @@ def get_sig_m_x(sig_c, z_x):
     eps_m[z_x_map] = get_sig_m_z(z_x[z_x_map], sig_c)
     return eps_m
 
-# L = 2.0
-# x = np.linspace(0, L, 21)
-# y = np.array([ 0.5, 1.6])
-# print x, y
-#
-# print 'L_x', get_LL_x(x, y)
+L = 2.0
+x = np.linspace(0, L, 21)
+y = np.array([ 1.6, 0.5])
+print x, y
 
-if True:
-    sig_c_i, z_x_i, y_i = get_cracking_history()
-    eps_c_i = get_eps_c_i(sig_c_i, z_x_i)
+print 'L_x', get_L_x(x, y)
 
-    plt.subplot(2, 2, 1)
-    plt.plot(eps_c_i, sig_c_i)
-    plt.plot([0.0, eps_fu], [0.0, sig_cu])
-
-    plt.subplot(2, 2, 2)
-    for i in range(1, len(z_x_i)):
-        plt.plot(x, get_eps_f_x(sig_c_i[i], z_x_i[i]))
-        plt.plot(x, get_sig_m_x(sig_c_i[i], z_x_i[i]) / E_m)
-    plt.ylim(ymin=0.0)
-
-    plt.subplot(2, 2, 3)
-    plt.plot(x, z_x_i[-1])
-
-    plt.subplot(2, 2, 4)
-    plt.plot(x, sig_mu_x)
-    for i in range(1, len(z_x_i)):
-        plt.plot(x, get_sig_m_x(sig_c_i[i], z_x_i[i]))
-    plt.ylim(ymin=0.0)
-
-    plt.show()
+# if True:
+#     sig_c_i, z_x_i, y_i = get_cracking_history()
+#     eps_c_i = get_eps_c_i(sig_c_i, z_x_i)
+# 
+#     plt.subplot(2, 2, 1)
+#     plt.plot(eps_c_i, sig_c_i)
+#     plt.plot([0.0, eps_fu], [0.0, sig_cu])
+# 
+#     plt.subplot(2, 2, 2)
+#     for i in range(1, len(z_x_i)):
+#         plt.plot(x, get_eps_f_x(sig_c_i[i], z_x_i[i]))
+#         plt.plot(x, get_sig_m_x(sig_c_i[i], z_x_i[i]) / E_m)
+#     plt.ylim(ymin=0.0)
+# 
+#     plt.subplot(2, 2, 3)
+#     plt.plot(x, z_x_i[-1])
+# 
+#     plt.subplot(2, 2, 4)
+#     plt.plot(x, sig_mu_x)
+#     for i in range(1, len(z_x_i)):
+#         plt.plot(x, get_sig_m_x(sig_c_i[i], z_x_i[i]))
+#     plt.ylim(ymin=0.0)
+# 
+#     plt.show()
