@@ -6,10 +6,10 @@ from matplotlib import pyplot as plt
 #===============================================================================
 # Crack bridge model
 #===============================================================================
-T = 8.  # [MPa]
+T = 12.  # [MPa]
 E_m = 25e+3  # [MPa]
 E_f = 180e+3  # [MPa]
-v_f = 0.04  # [-]
+v_f = 0.01  # [-]
 sig_fu = 1.8e+3  # [MPa]
 eps_fu = sig_fu / E_f  # ultimate fiber strain
 sig_cu = sig_fu * v_f  # ultimate composite stress
@@ -41,10 +41,10 @@ L = 1000.0  # length - mm
 x = np.linspace(0, L, n_x)
 sig_mu_x = np.linspace(3.0, 4.5, n_x)
 
-def get_cr_sig_cracking(sig_mu, z_x):
-    '''Determine the composite remote stress initiating a crack at position x
+def get_sig_c_z(sig_mu, z):
+    '''Determine the composite remote stress initiating a crack at position z
     '''
-    fun = lambda sig_c: sig_mu - get_sig_m_z(z_x, sig_c)
+    fun = lambda sig_c: sig_mu - get_sig_m_z(z, sig_c)
     try:
         # search the cracking stress level between zero and ultimate composite stress
         return brentq(fun, 0, sig_cu)
@@ -52,42 +52,67 @@ def get_cr_sig_cracking(sig_mu, z_x):
         # solution not found (shielded zone) return the ultimate composite stress
         return sig_cu
 
-get_cr_sig_cracking_x = np.vectorize(get_cr_sig_cracking)
+get_sig_c_x_i = np.vectorize(get_sig_c_z)
 
-def get_next_crack(z_x):
+def get_sig_c_i(z_x):
     '''Determine the new crack position and level of composite stress
     '''
     # for each material point find the load factor initiating a crack
-    sig_c_cr_x = get_cr_sig_cracking_x(sig_mu_x, z_x)
+    sig_c_x_i = get_sig_c_x_i(sig_mu_x, z_x)
     # get the position with the minimum load factor
-    y_idx = np.argmin(sig_c_cr_x)
-    sig_c_cr = sig_c_cr_x[y_idx]
-    return y_idx, sig_c_cr
+    y_idx = np.argmin(sig_c_x_i)
+    y_i = x[y_idx]
+    sig_c_i = sig_c_x_i[y_idx]
+    return sig_c_i, y_i
 
 def get_z_x(x, y_i):
-    z_grid = np.abs(x[:, np.newaxis] - np.array(y_i)[np.newaxis, :])
+    '''Calculate the array distances to the nearest crack y - local z coordinate
+    '''
+    y = np.array(y_i)
+    z_grid = np.abs(x[:, np.newaxis] - y[np.newaxis, :])
     return np.amin(z_grid, axis=1)
 
+def get_LL_x(x, y_lst):
+    '''Derive the boundary conditions for each crack.
+    '''
+    y = np.array(y_lst)
+    # todo: handle the sorting of the crack positions
+    #
+    # y_map = np.argsort(y)
+    # y_sorted = y[y_map]
+    d = (y[1:] - y[:-1]) / 2.0
+    L_left = -np.hstack([y[0], d])
+    L_right = np.hstack([d, L - y[-1]])
+    z_grid = x[np.newaxis, :] - y[:, np.newaxis]
+    left_ranges = np.logical_and(L_left[:, np.newaxis] <= z_grid, z_grid <= 0.0)
+    right_ranges = np.logical_and(L_right[:, np.newaxis] >= z_grid, z_grid >= 0.0)
+    ranges = np.logical_or(left_ranges, right_ranges)
+    row_idx = np.where(ranges)[0]
+    return np.vstack([-L_left[row_idx], L_right[row_idx]])
+
 def get_cracking_history():
+    '''Trace the response crack by crack.
+    '''
     # crack position list
-    y_i = []
+    y_lst = []
     # initial crack distance array (no crack - infinite)
-    z_x = np.ones_like(x) * L
+    z_x = np.ones_like(x) * 2 * L
+    # LL_x = np.ones_like(x) * 2 * L
     # crack distances list for each cracking state
-    z_x_i = [z_x]
+    z_x_lst = [z_x]
     # crack composite stress level list
-    sig_c_i = [0.0]
+    sig_c_lst = [0.0]
     while True:
-        x_idx, sig_c = get_next_crack(z_x)
-        if sig_c == sig_cu: break
-        y_i.append(x[x_idx])
-        z_x = get_z_x(x, y_i)
-        sig_c_i.append(sig_c)
-        z_x_i.append(z_x)
+        sig_c_i, y_i = get_sig_c_i(z_x)
+        if sig_c_i == sig_cu: break
+        y_lst.append(y_i)
+        z_x = get_z_x(x, y_lst)
+        sig_c_lst.append(sig_c_i)
+        z_x_lst.append(z_x)
     # append composite ultimate state
-    z_x_i.append(z_x)
-    sig_c_i.append(sig_cu)
-    return np.array(sig_c_i), np.array(z_x_i), np.array(y_i)
+    z_x_lst.append(z_x)
+    sig_c_lst.append(sig_cu)
+    return np.array(sig_c_lst), np.array(z_x_lst), np.array(y_lst)
 
 #===============================================================================
 # Postprocessing of the calculated response.
@@ -113,23 +138,34 @@ def get_sig_m_x(sig_c, z_x):
     eps_m[z_x_map] = get_sig_m_z(z_x[z_x_map], sig_c)
     return eps_m
 
-sig_c_i, d_x_i, y_i = get_cracking_history()
-eps_c_i = get_eps_c_i(sig_c_i, d_x_i)
+# L = 2.0
+# x = np.linspace(0, L, 21)
+# y = np.array([ 0.5, 1.6])
+# print x, y
+#
+# print 'L_x', get_LL_x(x, y)
 
-plt.subplot(2, 2, 1)
-plt.plot(eps_c_i, sig_c_i)
-plt.plot([0.0, eps_fu], [0.0, sig_cu])
+if True:
+    sig_c_i, z_x_i, y_i = get_cracking_history()
+    eps_c_i = get_eps_c_i(sig_c_i, z_x_i)
 
-plt.subplot(2, 2, 2)
-for i in range(1, len(d_x_i)):
-    plt.plot(x, get_eps_f_x(sig_c_i[i], d_x_i[i]))
-    plt.plot(x, get_sig_m_x(sig_c_i[i], d_x_i[i]) / E_m)
-plt.ylim(ymin=0.0)
+    plt.subplot(2, 2, 1)
+    plt.plot(eps_c_i, sig_c_i)
+    plt.plot([0.0, eps_fu], [0.0, sig_cu])
 
-plt.subplot(2, 2, 4)
-plt.plot(x, sig_mu_x)
-for i in range(1, len(d_x_i)):
-    plt.plot(x, get_sig_m_x(sig_c_i[i], d_x_i[i]))
-plt.ylim(ymin=0.0)
+    plt.subplot(2, 2, 2)
+    for i in range(1, len(z_x_i)):
+        plt.plot(x, get_eps_f_x(sig_c_i[i], z_x_i[i]))
+        plt.plot(x, get_sig_m_x(sig_c_i[i], z_x_i[i]) / E_m)
+    plt.ylim(ymin=0.0)
 
-plt.show()
+    plt.subplot(2, 2, 3)
+    plt.plot(x, z_x_i[-1])
+
+    plt.subplot(2, 2, 4)
+    plt.plot(x, sig_mu_x)
+    for i in range(1, len(z_x_i)):
+        plt.plot(x, get_sig_m_x(sig_c_i[i], z_x_i[i]))
+    plt.ylim(ymin=0.0)
+
+    plt.show()
