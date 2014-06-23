@@ -138,13 +138,6 @@ def get_sig_m_x(sig_c, z_x):
     eps_m[z_x_map] = get_sig_m_z(z_x[z_x_map], sig_c)
     return eps_m
 
-# L = 2.0
-# x = np.linspace(0, L, 21)
-# y = np.array([ 0.5, 1.6])
-# print x, y
-#
-# print 'L_x', get_LL_x(x, y)
-
 if True:
     sig_c_i, z_x_i, y_i = get_cracking_history()
     eps_c_i = get_eps_c_i(sig_c_i, z_x_i)
