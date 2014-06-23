@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.interpolate import interp2d
+from scipy.interpolate import interp2d, interp1d
 from scipy.optimize import brentq
 from matplotlib import pyplot as plt
 
@@ -73,7 +73,7 @@ def get_z_x(x, y_i):
     return np.amin(z_grid, axis=1)
 
 def get_LL_x(x, y_lst):
-    '''Derive the boundary conditions for each crack.
+    '''Derive the boundary conditions for each material point.
     '''
     y = np.array(y_lst)
     # todo: handle the sorting of the crack positions
@@ -89,6 +89,17 @@ def get_LL_x(x, y_lst):
     ranges = np.logical_or(left_ranges, right_ranges)
     row_idx = np.where(ranges)[0]
     return np.vstack([-L_left[row_idx], L_right[row_idx]])
+
+def get_L_x(x, y_lst):
+    '''Derive the boundary conditions for each material point.
+    '''
+    y = np.sort(y_lst)
+    d = (y[1:] - y[:-1]) / 2.0
+    xp = np.sort(np.hstack([0, y[:-1] + d, y, x[-1]]))
+    Lp = np.hstack([y[0], np.repeat(d, 2), L - y[-1], np.NAN])
+    f = interp1d(xp, Lp, kind='zero')
+    return f(x)
+
 
 def get_cracking_history():
     '''Trace the response crack by crack.

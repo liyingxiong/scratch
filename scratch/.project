@@ -3,6 +3,8 @@
 	<name>scratch</name>
 	<comment></comment>
 	<projects>
+		<project>etsproxy</project>
+		<project>quaducom</project>
 		<project>stats</project>
 		<project>util</project>
 	</projects>
