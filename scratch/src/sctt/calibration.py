@@ -1,4 +1,4 @@
-from quaducom.micro.resp_func.CB_clamped_rand_xi import CBClampedRandXi
+# from quaducom.micro.resp_func.CB_clamped_rand_xi import CBClampedRandXi
 from traits.api import HasTraits, Array, List, Float, Property, \
     cached_property
 import numpy as np
@@ -12,7 +12,6 @@ from numpy.linalg import solve, lstsq
 
 class Calibration(HasTraits):
 
-
     data = Array
 
     tau_arr = Array(input=True)
@@ -23,10 +22,10 @@ class Calibration(HasTraits):
     E_f = Float(200e3, auto_set=False, enter_set=True, input=True,
                   distr=['uniform'])
 
-    m = Float(2., auto_set=False, enter_set=True, input=True,
+    m = Float(7., auto_set=False, enter_set=True, input=True,
                   distr=['uniform'])
 
-    sV0 = Float(0.0026, auto_set=False, enter_set=True, input=True,
+    sV0 = Float(0.0042, auto_set=False, enter_set=True, input=True,
                   distr=['uniform'])
 
     V_f = Float(0.01, auto_set=False, enter_set=True, input=True,
@@ -34,8 +33,7 @@ class Calibration(HasTraits):
 
     w_arr = Array
 
-
-    responses = Property(depends_on='m, sV0')
+    responses = Property(depends_on='r, E_f, m, sV0, V_f')
     @cached_property
     def _get_responses(self):
         T = 2. * self.tau_arr / self.r
@@ -46,7 +44,7 @@ class Calibration(HasTraits):
         mu_int = ef0 * (1 - Gxi)
         I = s * gamma(1 + 1. / (self.m + 1)) * gammainc(1 + 1. / (self.m + 1), (ef0 / s) ** (self.m + 1))
         mu_broken = I / (self.m + 1)
-        sigma = (mu_int + mu_broken) * self.E_f * self.V_f * self.r ** 2 / 0.0035 ** 2
+        sigma = (mu_int + mu_broken) * self.E_f
         return sigma
 
     def sumed_response(self, weights_arr):
@@ -57,51 +55,58 @@ class Calibration(HasTraits):
         sumed_response = self.sumed_response(x_arr)
         return np.sum((self.data - sumed_response) ** 2)
 
-#     def fprime(self, x_arr):
-
-
-
-    def optimize(self):
-        b = []
-        for i in range(100):
-            b.append((0., None))
-        return fmin_l_bfgs_b(self.residuum, np.repeat(0, 100), bounds=b, approx_grad=True)
-
-
-
+#     def optimize(self):
+#         b = []
+#         for i in range(100):
+#             b.append((0., None))
+#         return fmin_l_bfgs_b(self.residuum, np.repeat(0, 100), bounds=b, approx_grad=True)
 
 if __name__ == '__main__':
 
     w_arr = np.linspace(0.0, np.sqrt(8.), 401) ** 2
+#     w_arr = np.linspace(0.0, 8, 401)
 #
-    from etsproxy.util.home_directory import \
-        get_home_directory
+#     from etsproxy.util.home_directory import \
+#         get_home_directory
+# 
+#     import os.path
+# 
+#     home_dir = get_home_directory()
+    
+#     print home_dir
+#     path = [home_dir, 'git',
+#             'simvisage',
+#             'quaducom',
+#             'quaducom',
+#             'meso',
+#             'homogenized_crack_bridge',
+#             'rigid_matrix',
+#             'DATA', 'PO01_RYP.ASC']
+    
+#     path = [home_dir, 'git',
+#             'rostar',
+#             'scratch',
+#             'diss_figs',
+#             'CB1.txt']
 
-    import os.path
-
-    home_dir = get_home_directory()
-    path = [home_dir, 'git',
-            'simvisage',
-            'quaducom',
-            'quaducom',
-            'meso',
-            'homogenized_crack_bridge',
-            'rigid_matrix',
-            'DATA', 'PO01_RYP.ASC']
-
-    filepath = os.path.join(*path)
-    print filepath
+#     filepath = os.path.join(*path)
+    
+    data = np.zeros_like(w_arr)
+    
+#     for i in range(5):
+    filepath = 'F:\\Eclipse\\git\\rostar\\scratch\\diss_figs\\CB1.txt'
     file1 = open(filepath, 'r')
-    test_xdata = -np.loadtxt(file1, delimiter=';')[:, 3]
-    test_xdata = test_xdata - test_xdata[0]
-    file2 = open(filepath, 'r')
-    test_ydata = (np.loadtxt(file2, delimiter=';')[:, 1] + 0.035) / 0.45 * 1000
-    interp = interp1d(test_xdata, test_ydata)
+    cb = np.loadtxt(file1, delimiter=';')
+    test_xdata = -cb[:,2]/4. - cb[:,3]/4. - cb[:,4]/2.
+    test_ydata = cb[:,1] / (11. * 0.445) * 1000
+    interp = interp1d(test_xdata, test_ydata, bounds_error=False, fill_value=0.)
     data = interp(w_arr)
-#
-
-
-
+            
+#         data = data + 0.2*data1
+    
+#     plt.plot(test_xdata, test_ydata)
+#     plt.plot(w_arr, data)
+#     plt.show()
 
 #     cb = CBClampedRandXi()
 #     data1 = []
@@ -111,53 +116,80 @@ if __name__ == '__main__':
 #     for wi in w_arr:
 #         data.append(cb(wi, 20., 200e3, 0.01, 0.0035, 2.0, 0.0026))
 #     data = (0.4*np.array(data1) + 0.6*np.array(data2)) / 0.0035**2
-
-    cali = Calibration(data=data,
+    
+#     for m in np.linspace(2., 30., 29):
+#         
+#         print m
+    
+    cali = Calibration(
+                       data=data,
                        w_arr=w_arr,
-                       tau_arr=np.linspace(0.001, 20, 500))
+                       V_f=0.00122375,
+                       tau_arr=np.logspace(np.log10(1e-5), np.log10(1), 200))
 
 #     weights = np.ones_like(cali.tau_arr)/float(len(cali.tau_arr))
 
 
-
+# 
     def residuum(arr):
-        cali.m = arr[0]
-        cali.sV0 = arr[1]
+        cali.sV0 = float(arr)
         sigma = cali.responses
-        residual = nnls(sigma[1:, ], data[1:])[1]
-#         sigma_avg = cali.sumed_response(x)
+        sigma[0] = 1e6*np.ones_like(cali.tau_arr)
+        data[0] = 1e6
+        residual = nnls(sigma, data)[1]
         return residual
+# 
+    sV0 = brute(residuum, ((0.0001, 0.01),), Ns=20)
+# 
+#         m = cali.m
+#         print 'shape', m, 'scale', sV0
+    
+#     T = 2. * cali.tau_arr / cali.r
+#     s = ((T * (m + 1) * sV0 ** m) / (2. * cali.E_f * pi * cali.r ** 2)) ** (1. / (m + 1))
+#     avg_eps = s*gamma(1 + 1/(m + 1))
+    
+#     print 'average breaking strain', avg_eps
 
-    m, s = brute(residuum, ((0, 10), (0.0001, 0.01)), Ns=10)
-
-    print 'shape', m, 'scale', s
 
     sigma = cali.responses
 #
 #     print sigma
 
-    x, y = nnls(sigma[1:], data[1:])
 
-    print 'residual', y
+    sigma[0] = 1e5*np.ones_like(cali.tau_arr)
+    data[0] = 1e5
+    
+    x, y = nnls(sigma, data)
+    
+    sigma[0] = np.zeros_like(cali.tau_arr)
+    data[0] = 0
 
+
+#         print 'residual', y
+    
+    print np.sum(x)
 #     x = cali.optimize()[0]
 
-
+    
     sigma_avg = cali.sumed_response(x)
-#
+    
+    plt.clf()
     plt.subplot(221)
     plt.plot(cali.w_arr, sigma_avg, '--', linewidth=2)
     plt.plot(cali.w_arr, data)
+#     plt.text(0.5, 0.5, 'm='+str(m)+', sV0='+str(float(sV0))[:7])
     plt.subplot(222)
-    plt.bar(cali.tau_arr, x, width=0.4)
+    plt.bar(np.log10(cali.tau_arr), x, width=0.02)
+#     plt.plot(cali.tau_arr, x)
     plt.subplot(223)
     plt.plot(cali.w_arr, sigma)
     plt.subplot(224)
-    plt.plot(cali.w_arr, data - sigma_avg)
-
-
-
+    for i, sigmai in enumerate(sigma.T):
+        plt.plot(cali.w_arr, sigmai, color='0', lw='1.5', alpha=x[i]/np.max(x))
     plt.show()
+    
+#         savepath = 'F:\\parametric study\\cb_avg\\m='+str(m)+' sV0='+str(float(sV0))[:7]+'.png'
+#         plt.savefig(savepath)
 
 
 
