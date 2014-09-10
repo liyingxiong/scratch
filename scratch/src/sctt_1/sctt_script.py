@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.interpolate import interp2d, interp1d
-from scipy.optimize import brentq
+from scipy.optimize import brentq, newton
 from matplotlib import pyplot as plt
 
 #===============================================================================
