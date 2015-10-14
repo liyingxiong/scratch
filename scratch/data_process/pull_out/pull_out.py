@@ -6,7 +6,7 @@ Created on Jul 29, 2015
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = 'C:\\Users\\Yingxiong\\simdb\exdata\\double_pullout\\2015-07-15_DPO-30cm-0-3300SBR\\DPO-40cm-0-3300SBR-V2.ASC'
+data = 'D:\\data\\pull_out\\2015-10-14_DPO-30cm-0-3300SBR_R2\\DPO-30cm-0-3300SBR-V3_R2.ASC'
 
 a = np.loadtxt(data, delimiter=';')
 
@@ -16,9 +16,9 @@ w1 = -a[:, 2]
 w2 = -a[:, 3]
 w3 = -a[:, 4]
 
-# plt.plot(w3, f)
-# plt.plot(w2, f)
 # plt.plot(w1, f)
+# plt.plot(w2, f)
+# plt.plot(w3, f)
 
 # plt.figure()
 # plt.plot(np.arange(len(w1)), w1, 'ro', label='1')
@@ -67,13 +67,13 @@ w3 = shift(w3)
 
 #========================================================
 
-# w_avg = ((w1 + w3) / 2 + w2) / 2
+w_avg = ((w1 + w2) / 2 + w3) / 2
 
-w_avg = (w1 + w2) / 2
-
+# w_avg = (w1 + w2) / 2
+#
 plt.figure()
 plt.plot(w_avg, f)
-fpath = 'D:\\data\\pull_out\\DPO-40cm-0-3300SBR-V2.txt'
+fpath = 'D:\\data\\pull_out\\2015-10-14_DPO-30cm-0-3300SBR_R2\\DPO-30_cm-0-3300SBR-V3_R2.txt'
 np.savetxt(fpath, np.vstack((w_avg, f)), fmt='%.8f', delimiter=';',
            header='first line crack opening; second line force')
 d = np.loadtxt(fpath, delimiter=';')
