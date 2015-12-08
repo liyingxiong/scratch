@@ -22,31 +22,31 @@ plt.plot(np.arange(800000), disp[-800000::])
 
 
 # v1============================================================
-# fe0 = force[0:134060]
-# fe1 = force[200700:216400]
-# fe2 = force[307400:323250]
-# fe3 = force[391950:407700]
-# fe4 = force[754250:770000]
-# fe5 = force[3487829 + 540150:3487829 + 555900]
-#
-# de0 = disp[0:134060]
-# de1 = disp[200700:216400]
-# de2 = disp[307400:323250]
-# de3 = disp[391950:407700]
-# de4 = disp[754250:770000]
-# de5 = disp[3487829 + 540150:3487829 + 555900]
-#
-#
-# plt.plot(avg(de0) / 250., avg(fe0) / 25.76 * 1000., 'k')
-# plt.plot(avg(de1) / 250., avg(fe1) / 25.76 * 1000., 'k')
-# plt.plot(avg(de2) / 250., avg(fe2) / 25.76 * 1000., 'k')
-# plt.plot(avg(de3) / 250., avg(fe3) / 25.76 * 1000., 'k')
-# plt.plot(avg(de4) / 250., avg(fe4) / 25.76 * 1000., 'k')
-# plt.plot(avg(de5) / 250., avg(fe5) / 25.76 * 1000., 'k')
-#
-# plt.xlabel('strain')
-# plt.ylabel('stress [MPa]')
-#
+fe0 = force[0:134060]
+fe1 = force[200700:216400]
+fe2 = force[307400:323250]
+fe3 = force[391950:407700]
+fe4 = force[754250:770000]
+fe5 = force[3487829 + 540150:3487829 + 555900]
+
+de0 = disp[0:134060]
+de1 = disp[200700:216400]
+de2 = disp[307400:323250]
+de3 = disp[391950:407700]
+de4 = disp[754250:770000]
+de5 = disp[3487829 + 540150:3487829 + 555900]
+
+
+plt.plot(avg(de0) / 250., avg(fe0) / 25.76 * 1000., 'k')
+plt.plot(avg(de1) / 250., avg(fe1) / 25.76 * 1000., 'k')
+plt.plot(avg(de2) / 250., avg(fe2) / 25.76 * 1000., 'k')
+plt.plot(avg(de3) / 250., avg(fe3) / 25.76 * 1000., 'k')
+plt.plot(avg(de4) / 250., avg(fe4) / 25.76 * 1000., 'k')
+plt.plot(avg(de5) / 250., avg(fe5) / 25.76 * 1000., 'k')
+
+plt.xlabel('strain')
+plt.ylabel('stress [MPa]')
+
 #
 # se0 = avg(de0) / 250.
 # se1 = avg(de1) / 250.

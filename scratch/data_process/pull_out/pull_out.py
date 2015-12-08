@@ -6,7 +6,7 @@ Created on Jul 29, 2015
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = 'D:\\data\\pull_out\\2015-10-14_DPO-30cm-0-3300SBR_R2\\DPO-30cm-0-3300SBR-V3_R2.ASC'
+data = 'D:\\data\\pull_out\\2015-10-14_DPO-30cm-0-3300SBR_R2\\DPO-30cm-0-3300SBR-V1_R2.ASC'
 
 a = np.loadtxt(data, delimiter=';')
 
@@ -59,6 +59,8 @@ w3 = shift(w3)
 # plt.plot(w1, f, label='1')
 # plt.plot(w2, f, label='2')
 # plt.plot(w3, f, label='3')
+# plt.legend()
+
 # plt.figure()
 # plt.plot(np.arange(len(w1)), w1, label='1')
 # plt.plot(np.arange(len(w2)), w2, label='2')
@@ -71,15 +73,15 @@ w_avg = ((w1 + w2) / 2 + w3) / 2
 
 # w_avg = (w1 + w2) / 2
 #
-plt.figure()
-plt.plot(w_avg, f)
-fpath = 'D:\\data\\pull_out\\2015-10-14_DPO-30cm-0-3300SBR_R2\\DPO-30_cm-0-3300SBR-V3_R2.txt'
-np.savetxt(fpath, np.vstack((w_avg, f)), fmt='%.8f', delimiter=';',
+# plt.figure()
+# plt.plot(w_avg, f)
+fpath = data.replace('.ASC', '.txt')
+print fpath
+np.savetxt(fpath, np.vstack((w_avg[w_avg < 13.4], f[w_avg < 13.4])), fmt='%.8f', delimiter=';',
            header='first line crack opening; second line force')
 d = np.loadtxt(fpath, delimiter=';')
 plt.figure()
 plt.plot(d[0], d[1])
-
 
 plt.show()
 
