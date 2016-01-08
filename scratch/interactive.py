@@ -21,13 +21,13 @@ plt.ylim((0, 35))
 
 rax = {}
 # old
-rax['30-V1'] = plt.axes([0.05, 0.1, 0.06, 0.03])
-rax['30-V2'] = plt.axes([0.12, 0.1, 0.06, 0.03])
-rax['40-V2'] = plt.axes([0.19, 0.1, 0.08, 0.03])
-rax['50-V1'] = plt.axes([0.05, 0.14, 0.10, 0.03])
-rax['50-V2'] = plt.axes([0.16, 0.14, 0.1, 0.03])
-rax['60-V1'] = plt.axes([0.05, 0.18, 0.12, 0.03])
-rax['60-V2'] = plt.axes([0.18, 0.18, 0.12, 0.03])
+rax['30-V1_R1'] = plt.axes([0.05, 0.1, 0.06, 0.03])
+rax['30-V2_R1'] = plt.axes([0.12, 0.1, 0.06, 0.03])
+rax['40-V2_R1'] = plt.axes([0.19, 0.1, 0.08, 0.03])
+rax['50-V1_R1'] = plt.axes([0.05, 0.14, 0.10, 0.03])
+rax['50-V2_R1'] = plt.axes([0.16, 0.14, 0.1, 0.03])
+rax['60-V1_R1'] = plt.axes([0.05, 0.18, 0.12, 0.03])
+rax['60-V2_R1'] = plt.axes([0.18, 0.18, 0.12, 0.03])
 
 # plate 1
 rax['60-V1_R2'] = plt.axes([0.05, 0.23, 0.12, 0.03])
@@ -57,6 +57,28 @@ rax['70-V3g_R2_f'] = plt.axes([0.15, 0.49, 0.14, 0.03])
 rax['70-V2_R2_f'] = plt.axes([0.15, 0.52, 0.14, 0.03])
 rax['70-V1_R2_f'] = plt.axes([0.15, 0.55, 0.14, 0.03])
 
+# 3rd round
+rax['50-V1g_R3_f'] = plt.axes([0.05, 0.61, 0.10, 0.03])
+rax['50-V3_R3_f'] = plt.axes([0.15, 0.61, 0.10, 0.03])
+
+rax['60-V2_R3_f'] = plt.axes([0.05, 0.64, 0.12, 0.03])
+rax['60-V3_R3_f'] = plt.axes([0.05, 0.67, 0.12, 0.03])
+rax['60-V1g_R3_f'] = plt.axes([0.05, 0.70, 0.12, 0.03])
+rax['40-V2_R3_f'] = plt.axes([0.17, 0.64, 0.08, 0.03])
+rax['40-V3_R3_f'] = plt.axes([0.17, 0.67, 0.08, 0.03])
+rax['40-V1g_R3_f'] = plt.axes([0.17, 0.70, 0.08, 0.03])
+
+rax['70-V2_R3_f'] = plt.axes([0.05, 0.73, 0.14, 0.03])
+rax['70-V1g_R3_f'] = plt.axes([0.05, 0.79, 0.14, 0.03])
+rax['30-V2_R3_f'] = plt.axes([0.19, 0.73, 0.06, 0.03])
+rax['30-V3_R3_f'] = plt.axes([0.19, 0.76, 0.06, 0.03])
+rax['30-V1g_R3_f'] = plt.axes([0.19, 0.79, 0.06, 0.03])
+
+rax['80-V2_R3_f'] = plt.axes([0.05, 0.82, 0.16, 0.03])
+rax['80-V1g_R3_f'] = plt.axes([0.05, 0.85, 0.16, 0.03])
+rax['20-V2_R3_f'] = plt.axes([0.21, 0.82, 0.04, 0.03])
+rax['20-V1_R3_f'] = plt.axes([0.21, 0.85, 0.04, 0.03])
+
 d_set = {}
 labels = []
 fpath = 'D:\\data\\pull_out\\all'
@@ -66,6 +88,7 @@ for fname in listdir(fpath):
     flabel = flabel.replace('DPO-', '')
     flabel = flabel.replace('.txt', '')
     flabel = flabel.replace('cm', '')
+    flabel = flabel.replace('.asc', '')
     labels.append(flabel)
 
     if 'g' in flabel:
@@ -73,7 +96,7 @@ for fname in listdir(fpath):
     else:
         marker = None
 
-    if not 'R2' in flabel:
+    if 'R1' in flabel:
         alpha = 1.0
         color = str(float(flabel[:2]) * 0.01 + 0.2)
     else:

@@ -6,7 +6,7 @@ Created on Jul 29, 2015
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = 'D:\\data\\pull_out\\2015-10-14_DPO-30cm-0-3300SBR_R2\\DPO-30cm-0-3300SBR-V1_R2.ASC'
+data = 'D:\\data\\pull_out_r3\\DPO-20cm-0-3300SBR-V1_R3.asc'
 
 a = np.loadtxt(data, delimiter=';')
 
@@ -29,7 +29,7 @@ w3 = -a[:, 4]
 
 
 def shift(w):
-    idx = np.where(np.abs(np.diff(w)) > 0.1)[0]
+    idx = np.where(np.abs(np.diff(w)) > 0.8)[0]
     for i in np.arange(len(idx) - 1):
         if idx[i + 1] == idx[i] + 1:
             w[idx[i + 1]] = w[idx[i]]
@@ -43,7 +43,7 @@ def shift(w):
 #         w[np.argmin(np.diff(w)) + 1]
 #     w[np.argmin(np.diff(w)) + 1::] += w[np.argmin(np.diff(w))] - \
 #         w[np.argmin(np.diff(w)) + 1]
-    idx1 = np.where(np.abs(np.diff(w)) > 0.1)[0]
+    idx1 = np.where(np.abs(np.diff(w)) > 0.8)[0]
     print idx1
     for i in idx1:
         w[i + 1::] += w[i] - w[i + 1]
@@ -56,10 +56,11 @@ w3 = shift(w3)
 #
 # ==================================
 
-# plt.plot(w1, f, label='1')
-# plt.plot(w2, f, label='2')
-# plt.plot(w3, f, label='3')
-# plt.legend()
+plt.plot(w1, f, label='1')
+plt.plot(w2, f, label='2')
+plt.plot(w3, f, label='3')
+plt.legend()
+plt.show()
 
 # plt.figure()
 # plt.plot(np.arange(len(w1)), w1, label='1')
@@ -71,19 +72,24 @@ w3 = shift(w3)
 
 w_avg = ((w1 + w2) / 2 + w3) / 2
 
+# w_avg = w2
+
 # w_avg = (w1 + w2) / 2
 #
 # plt.figure()
 # plt.plot(w_avg, f)
-fpath = data.replace('.ASC', '.txt')
-print fpath
-np.savetxt(fpath, np.vstack((w_avg[w_avg < 13.4], f[w_avg < 13.4])), fmt='%.8f', delimiter=';',
-           header='first line crack opening; second line force')
-d = np.loadtxt(fpath, delimiter=';')
-plt.figure()
-plt.plot(d[0], d[1])
+save = 1
+if save:
+    fpath = data.replace('.ASC', '.txt')
+    fpath = fpath.replace('r3', 'r3_avg')
+    print fpath
+    np.savetxt(fpath, np.vstack((w_avg, f)), fmt='%.8f', delimiter=';',
+               header='first line crack opening; second line force')
+    d = np.loadtxt(fpath, delimiter=';')
+    plt.figure()
+    plt.plot(d[0], d[1])
 
-plt.show()
+    plt.show()
 
 # plt.plot(w)
 
