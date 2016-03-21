@@ -16,7 +16,7 @@ colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 colorcycler = cycle(colors)
 
 fig, ax = plt.subplots()
-plt.xlim((-2, 25))
+plt.xlim((-1, 20))
 plt.ylim((0, 35))
 
 rax = {}
@@ -24,10 +24,10 @@ rax = {}
 rax['30-V1_R1'] = plt.axes([0.05, 0.1, 0.06, 0.03])
 rax['30-V2_R1'] = plt.axes([0.12, 0.1, 0.06, 0.03])
 rax['40-V2_R1'] = plt.axes([0.19, 0.1, 0.08, 0.03])
-rax['50-V1_R1'] = plt.axes([0.05, 0.14, 0.10, 0.03])
-rax['50-V2_R1'] = plt.axes([0.16, 0.14, 0.1, 0.03])
+rax['50-V1_R1'] = plt.axes([0.18, 0.18, 0.10, 0.03])
+rax['50-V2_R1'] = plt.axes([0.18, 0.14, 0.1, 0.03])
 rax['60-V1_R1'] = plt.axes([0.05, 0.18, 0.12, 0.03])
-rax['60-V2_R1'] = plt.axes([0.18, 0.18, 0.12, 0.03])
+rax['60-V2_R1'] = plt.axes([0.05, 0.14, 0.12, 0.03])
 
 # plate 1
 rax['60-V1_R2'] = plt.axes([0.05, 0.23, 0.12, 0.03])
@@ -79,6 +79,34 @@ rax['80-V1g_R3_f'] = plt.axes([0.05, 0.85, 0.16, 0.03])
 rax['20-V2_R3_f'] = plt.axes([0.21, 0.82, 0.04, 0.03])
 rax['20-V1_R3_f'] = plt.axes([0.21, 0.85, 0.04, 0.03])
 
+rax['20-V3_R3_f'] = plt.axes([0.21, 0.88, 0.04, 0.03])
+rax['15-V1_R3_f'] = plt.axes([0.18, 0.88, 0.03, 0.03])
+
+
+# 4th round
+rax['10-V1_R4_f'] = plt.axes([0.43, 0.37, 0.02, 0.03])
+rax['20-V1_R4_f'] = plt.axes([0.41, 0.40, 0.04, 0.03])
+rax['30-V1_R4_f'] = plt.axes([0.39, 0.43, 0.06, 0.03])
+rax['40-V1_R4_f'] = plt.axes([0.31, 0.43, 0.08, 0.03])
+rax['50-V1_R4_f'] = plt.axes([0.31, 0.40, 0.10, 0.03])
+rax['60-V1_R4_f'] = plt.axes([0.31, 0.37, 0.12, 0.03])
+rax['70-V1_R4_f'] = plt.axes([0.31, 0.34, 0.14, 0.03])
+rax['40-V2_R4_f'] = plt.axes([0.31, 0.31, 0.08, 0.03])
+rax['30-V2_R4_f'] = plt.axes([0.39, 0.31, 0.06, 0.03])
+rax['50-V2_R4_f'] = plt.axes([0.31, 0.28, 0.10, 0.03])
+rax['20-V2_R4_f'] = plt.axes([0.41, 0.28, 0.04, 0.03])
+rax['60-V2_R4_f'] = plt.axes([0.31, 0.25, 0.12, 0.03])
+rax['10-V2_R4_f'] = plt.axes([0.43, 0.25, 0.02, 0.03])
+rax['70-V2_R4_f'] = plt.axes([0.31, 0.22, 0.14, 0.03])
+rax['40-V3_R4_f'] = plt.axes([0.31, 0.19, 0.08, 0.03])
+rax['30-V3_R4_f'] = plt.axes([0.39, 0.19, 0.06, 0.03])
+rax['50-V3_R4_f'] = plt.axes([0.31, 0.16, 0.10, 0.03])
+rax['20-V3_R4_f'] = plt.axes([0.41, 0.16, 0.04, 0.03])
+rax['60-V3_R4_f'] = plt.axes([0.31, 0.13, 0.12, 0.03])
+rax['10-V3_R4_f'] = plt.axes([0.43, 0.13, 0.02, 0.03])
+rax['70-V3_R4_f'] = plt.axes([0.31, 0.10, 0.14, 0.03])
+
+
 d_set = {}
 labels = []
 fpath = 'D:\\data\\pull_out\\all'
@@ -104,18 +132,18 @@ for fname in listdir(fpath):
         color = next(colorcycler)
 
     if '_f' in flabel:
-        ls = '--'
-    else:
         ls = '-'
+    else:
+        ls = '--'
 
     d_set[flabel], = ax.plot(data[0][data[0] < 25], data[1][data[0] < 25],
-                             linestyle=ls, lw=1.5, color=color, marker=marker, markevery=0.03, label=flabel, alpha=alpha, visible=False)
-    rax[flabel].plot([0, 2], [0, 0], linestyle=ls, lw=1.5, color=color,
+                             linestyle=ls, lw=1.0, color=color, marker=marker, markevery=0.03, label=flabel, alpha=alpha, visible=False)
+    rax[flabel].plot([0, 2], [0, 0], linestyle=ls, lw=1.0, color=color,
                      marker=marker, markevery=0.1, label=flabel, alpha=alpha)
     rax[flabel].set_ylim((-0.2, 1))
     rax[flabel].set_xlim((-2, 4))
 
-plt.subplots_adjust(left=0.35)
+plt.subplots_adjust(left=0.52, right=0.99)
 
 # plt.legend(loc=2, ncol=2)
 

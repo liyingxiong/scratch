@@ -6,15 +6,21 @@ Created on Jul 29, 2015
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = 'D:\\data\\pull_out_r3\\DPO-20cm-0-3300SBR-V1_R3.asc'
+data = 'D:\\data\\pull_out_r4\\DPOR4103.asc'
+
+scaling = 0
 
 a = np.loadtxt(data, delimiter=';')
 
 
 f = a[:, 1]
-w1 = -a[:, 2]
-w2 = -a[:, 3]
-w3 = -a[:, 4]
+
+if scaling:  # only 8 yarns
+    f = f * 9. / 8.
+
+wli = -a[:, 2]
+wre = -a[:, 3]
+wvo = -a[:, 4]
 
 # plt.plot(w1, f)
 # plt.plot(w2, f)
@@ -29,7 +35,7 @@ w3 = -a[:, 4]
 
 
 def shift(w):
-    idx = np.where(np.abs(np.diff(w)) > 0.8)[0]
+    idx = np.where(np.abs(np.diff(w)) > 0.3)[0]
     for i in np.arange(len(idx) - 1):
         if idx[i + 1] == idx[i] + 1:
             w[idx[i + 1]] = w[idx[i]]
@@ -43,22 +49,22 @@ def shift(w):
 #         w[np.argmin(np.diff(w)) + 1]
 #     w[np.argmin(np.diff(w)) + 1::] += w[np.argmin(np.diff(w))] - \
 #         w[np.argmin(np.diff(w)) + 1]
-    idx1 = np.where(np.abs(np.diff(w)) > 0.8)[0]
+    idx1 = np.where(np.abs(np.diff(w)) > 0.3)[0]
     print idx1
     for i in idx1:
         w[i + 1::] += w[i] - w[i + 1]
     return w
 
 #
-w1 = shift(w1)
-w2 = shift(w2)
-w3 = shift(w3)
+# w1 = shift(w1)
+# w2 = shift(w2)
+# w3 = shift(w3)
 #
 # ==================================
 
-plt.plot(w1, f, label='1')
-plt.plot(w2, f, label='2')
-plt.plot(w3, f, label='3')
+plt.plot(wli, f, label='li')
+plt.plot(wre, f, label='re')
+plt.plot(wvo, f, label='vo')
 plt.legend()
 plt.show()
 
@@ -70,7 +76,7 @@ plt.show()
 
 #========================================================
 
-w_avg = ((w1 + w2) / 2 + w3) / 2
+w_avg = ((wli + wre) / 2 + wvo) / 2
 
 # w_avg = w2
 
@@ -81,9 +87,9 @@ w_avg = ((w1 + w2) / 2 + w3) / 2
 save = 1
 if save:
     fpath = data.replace('.ASC', '.txt')
-    fpath = fpath.replace('r3', 'r3_avg')
+    fpath = fpath.replace('r4', 'r4_avg')
     print fpath
-    np.savetxt(fpath, np.vstack((w_avg, f)), fmt='%.8f', delimiter=';',
+    np.savetxt(fpath, np.vstack((w_avg[w_avg < 23], f[w_avg < 23])), fmt='%.8f', delimiter=';',
                header='first line crack opening; second line force')
     d = np.loadtxt(fpath, delimiter=';')
     plt.figure()

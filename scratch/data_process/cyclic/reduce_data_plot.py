@@ -9,14 +9,26 @@ from matplotlib import pyplot as plt
 import time as t
 import csv
 import os
+from dateutil.parser import parse
 
-directory = 'D:\data\\unprocessed\\exdata\\tensile_tests\\buttstrap_clamping\\2015-08-18_TTb-2C-3cm-0-3300EP_cyc-Aramis-2d\\'
-fname = 'TTb-2C-3cm-0-3300EP-V2_cyc-Aramis2d-sideview.csv'
+
+# directory = 'D:\data\\unprocessed\\exdata\\tensile_tests\\buttstrap_clamping\\2015-08-18_TTb-2C-3cm-0-3300EP_cyc-Aramis-2d\\'
+# fname = 'TTb-2C-3cm-0-3300EP-V2_cyc-Aramis2d-sideview.csv'
+
+directory = 'D:\data\\'
+fname = 'BT-3PT-1s-20cm-d8mm-RF2_2C-cyc-Aramis2d.csv'
+
+
+def convert_date(a):
+    #     a = str(a)
+    a = a.replace(',', '.')
+    return parse(a, dayfirst=True)
+
 
 n_rows = sum(1 for row in open(directory + fname))
 
 reduced = pd.read_csv(
-    directory + fname, nrows=1, sep=';', decimal=',', index_col=[0], header=[0, 1], parse_dates=[0], dayfirst=True)
+    directory + fname, nrows=1, sep=';', decimal=',', index_col=[0], header=[0, 1], parse_dates=[0], date_parser=convert_date, dayfirst=True)
 
 print reduced
 
@@ -26,7 +38,7 @@ n_chunks = n_rows / c_size + 1
 
 i = 1
 
-for chunk in pd.read_csv(directory + fname, chunksize=c_size, sep=';', decimal=',', parse_dates=[0], header=[0, 1], index_col=[0], dayfirst=True):
+for chunk in pd.read_csv(directory + fname, chunksize=c_size, sep=';', decimal=',', parse_dates=[0], date_parser=convert_date, header=[0, 1], index_col=[0], dayfirst=True):
 
     print '%d of %d chunks loaded' % (i, n_chunks)
 
