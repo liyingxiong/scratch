@@ -15,8 +15,8 @@ from dateutil.parser import parse
 # directory = 'D:\data\\unprocessed\\exdata\\tensile_tests\\buttstrap_clamping\\2015-08-18_TTb-2C-3cm-0-3300EP_cyc-Aramis-2d\\'
 # fname = 'TTb-2C-3cm-0-3300EP-V2_cyc-Aramis2d-sideview.csv'
 
-directory = 'D:\data\\'
-fname = 'BT-3PT-1s-20cm-d8mm-RF2_2C-cyc-Aramis2d.csv'
+directory = 'D:\data\\jan\\'
+fname = 'Y2B-C1-T1-01-3b-1000-10000Zykl-mitZykl.csv'
 
 
 def convert_date(a):
