@@ -8,6 +8,8 @@ if __name__ == '__main__':
     from ibvpy.mats.mats2D.mats2D_cmdm.mats2D_cmdm import \
         MATS2DMicroplaneDamage
 
+    from ibvpy.mats.mats2D.mats2D_elastic import MATS2DElastic
+
     import numpy as np
 
     from ibvpy.mats.mats_explore import MATSExplore, MATS2DExplore
@@ -17,15 +19,13 @@ if __name__ == '__main__':
     phi_fn = PhiFnStrainSoftening(Epp=1e-4, Efp=2e-4, h=0.001)
     mats_eval = MATS2DMicroplaneDamage(nu=0.3,
                                        n_mp=30, phi_fn=phi_fn)
-
+    mats_eval = MATS2DElastic(E=30e+3)
     stress_max = []
     for alpha_rad in [0.0, np.pi / 8.0, np.pi / 4.0]:
 
-        explorer = MATSExplore(dim=MATS2DExplore(mats_eval=mats_eval),
-                               n_steps=10)
+        explorer = MATSExplore(dim=MATS2DExplore(mats_eval=mats_eval))
 
         bc_proportional = explorer.tloop.tstepper.bcond_mngr.bcond_list[0]
-
         bc_proportional.alpha_rad = alpha_rad
 
         explorer.tloop.eval()
