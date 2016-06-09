@@ -3,8 +3,13 @@ Created on 03.06.2016
 
 @author: Yingxiong
 '''
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+nu = 0.3  # possion's ratio
+eps11 = -1.
+eps = np.array([[eps11, 0, ], [0, -nu * eps11]])
+n_mp = 6  # number of microplanes
 
 
 def projection(eps, n_mp):
