@@ -3,13 +3,14 @@ Created on 03.06.2016
 
 @author: Yingxiong
 '''
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 nu = 0.3  # possion's ratio
-eps11 = 1.
+eps11 = -1.
 eps = np.array([[eps11, 0, ], [0, -nu * eps11]])
-n_mp = 100  # number of microplanes
+n_mp = 6  # number of microplanes
 
 # the angles of the microplanes
 alpha_arr = np.linspace(0., np.pi, n_mp)
@@ -19,7 +20,7 @@ MPN = np.vstack((np.cos(alpha_arr), np.sin(alpha_arr)))
 e = np.einsum('ij,jk->ik', eps, MPN)
 # magnitude of the normal strain vector for each microplane
 e_N = np.einsum('ik,ik->k', e, MPN)
-# print e_N
+print e_N
 # normal strain vector for each microplane
 e_N_vec = np.einsum('i,ji->ji', e_N, MPN)
 # tangential strain vector for each microplane
