@@ -21,7 +21,7 @@ if __name__ == '__main__':
 #     phi_fn = PhiFnStrainSoftening(Epp=1e-4, Efp=2e-4, h=0.001)
 #     mats_eval = MATS2DMicroplaneDamage(nu=0.3,
 #                                        n_mp=30, phi_fn=phi_fn)
-    mats_eval = MATS2DElastic(E=30e+3, stress_state='plane_stress')
+    mats_eval = MATS2DElastic(E=30e+3, nu=0.3, stress_state='plane_stress')
     stress_max = []
 #     alpha_rad = np.pi / 4
     for alpha_rad in [0., np.pi / 4]:
@@ -30,7 +30,9 @@ if __name__ == '__main__':
         bc_proportional = explorer.tloop.tstepper.bcond_mngr.bcond_list[0]
         bc_proportional.alpha_rad = alpha_rad
 
-        explorer.tloop.eval()
+        u = explorer.tloop.eval()
+
+        print 'u', u
 
         stress_strain = explorer.rtrace_mngr.rtrace_bound_list[0].trace
         strain = stress_strain.xdata
@@ -54,9 +56,9 @@ if __name__ == '__main__':
             sig22 = sig_sig.ydata
             plt.plot(sig11, sig22, label='sig11-sig22')
 
-    D = explorer.tloop.tstepper.tse_integ.D_el
+        D = explorer.tloop.tstepper.tse_integ.D_el
 
-    print np.dot(D, np.array([0.003 * np.sqrt(2) / 2, 0.003 * np.sqrt(2) / 2, 0]))
+        print np.dot(D, u)
 
     plt.legend(loc='best')
     plt.show()
