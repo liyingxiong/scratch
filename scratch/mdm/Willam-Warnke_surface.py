@@ -44,7 +44,7 @@ def rho_5(xi, theta):
     '''five parameter model'''
 
     ft = 0.15  # uniaxial tensile strength
-    fcu = 1.0  # uniaxial compressive strength
+    fcu = 1.  # uniaxial compressive strength
     fcb = 1.8  # biaxial compressive strength
 
     a_z = ft / fcu
@@ -61,7 +61,7 @@ def rho_5(xi, theta):
     a2 = a2_numerator / a2_denominator
     a1 = 1 / 3. * (2 * a_u - a_z) * a2 + np.sqrt(6 / 5) * \
         (a_z - a_u) / (2 * a_u + a_z)
-    a0 = 2 / 3. * a_u * a1 - 4 / 9. * a_u ** 2 * a_z + np.sqrt(2 / 15.) * a_u
+    a0 = 2 / 3. * a_u * a1 - 4 / 9. * a_u ** 2 * a2 + np.sqrt(2 / 15.) * a_u
 
     x0 = (-a1 - np.sqrt(a1 ** 2 - 4 * a0 * a2)) / (2 * a2)
 
@@ -69,6 +69,9 @@ def rho_5(xi, theta):
         ((x + x0) * (x - 1 / 3.) * (x0 + 1 / 3.))
     b1 = (x + 1 / 3) * b2 + (np.sqrt(6 / 5) - 3 * q2) / (3 * x - 1)
     b0 = -x0 * b1 - x0 ** 2 * b2
+
+    print a0, a1, a2
+    print b0, b1, b2
 
     r1 = a0 + a1 * (xi / fcu) + a2 * (xi / fcu) ** 2
     r2 = b0 + b1 * (xi / fcu) + b2 * (xi / fcu) ** 2
