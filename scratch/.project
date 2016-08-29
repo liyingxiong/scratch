@@ -3,6 +3,7 @@
 	<name>scratch</name>
 	<comment></comment>
 	<projects>
+		<project>cbfe</project>
 		<project>etsproxy</project>
 		<project>quaducom</project>
 		<project>sctt</project>

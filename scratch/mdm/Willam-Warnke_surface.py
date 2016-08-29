@@ -70,9 +70,6 @@ def rho_5(xi, theta):
     b1 = (x + 1 / 3) * b2 + (np.sqrt(6 / 5) - 3 * q2) / (3 * x - 1)
     b0 = -x0 * b1 - x0 ** 2 * b2
 
-    print a0, a1, a2
-    print b0, b1, b2
-
     r1 = a0 + a1 * (xi / fcu) + a2 * (xi / fcu) ** 2
     r2 = b0 + b1 * (xi / fcu) + b2 * (xi / fcu) ** 2
 
@@ -91,7 +88,7 @@ xi, theta = np.mgrid[-5:1:100j, 0:np.pi / 3:20j]
 theta = np.hstack(
     (theta, theta[:, ::-1], theta, theta[:, ::-1], theta, theta[:, ::-1]))
 xi = np.hstack((xi, xi, xi, xi, xi, xi))
-r = rho_5(xi, theta)
+r = rho_3(xi, theta)
 r[r < 0] = 0
 
 # the actual coordinates in Haigh-Westergaard coordinates
