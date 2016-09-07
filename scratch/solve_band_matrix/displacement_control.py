@@ -15,6 +15,11 @@ def get_E(eps):
 def get_sig(eps):
     return -eps ** 3 / 3. + eps ** 2 + 0.5 * eps
 
+# def get_E(eps):
+#     return np.ones_like(eps)
+# def get_sig(eps):
+#     return 1. * eps
+
 
 def get_K(eps):
     A = np.arange(7) + 1.
@@ -64,8 +69,7 @@ def fix_bc(d, a, b):
 
 def get_eps(U):
     l = 10.
-    A = np.arange(7) + 1.
-    eps = np.diff(U) / l / A
+    eps = np.diff(U) / l
     return eps
 
 
@@ -106,31 +110,34 @@ A = np.arange(7) + 1.
 
 
 print '=================1=================='
-print get_Fint(get_eps(dU))
-print p
+# print dU
+# print A * get_eps(dU)
+# print get_Fint(get_eps(dU))
+
+# print dfsfsfsdf
 R = p - get_Fint(get_eps(dU))
 print R
-
-
-print '====================2================'
+#
+#
+# print '====================2================'
 U += dU
 eps = get_eps(U)
 d, a, b = get_K(eps)
 d, a, b = apply_bc(d, a, b)
-x = solve(8, d, a, c, a, c, np.hstack((-R[1:-1], [0, 0])))
-
+x = solve(8, d, a, c, a, c, np.hstack((R[1:-1], [0, 0])))
+#
 dU = np.append(0, x[0:-1])
-dp = np.zeros(8)
-dp[-1] = -x[-1]
-p += dp
-
-A = np.arange(7) + 1.
+# dp = np.zeros(8)
+# dp[-1] = -x[-1]
+# p += dp
+#
+# A = np.arange(7) + 1.
 U += dU
-print get_Fint(get_eps(U))
+# print get_Fint(get_eps(U))
 print p
 R = p - get_Fint(get_eps(U))
 print R
-
-
+#
+#
 # plt.plot(np.arange(8), dU)
 # plt.show()
