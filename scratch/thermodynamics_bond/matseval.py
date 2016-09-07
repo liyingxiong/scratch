@@ -3,17 +3,20 @@ Created on 27.08.2016
 
 @author: Yingxiong
 '''
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def get_bond_slip():
     '''for plotting the bond slip relationship
     '''
     # slip array as input
-    s_arr = np.hstack((np.linspace(0, 1e-3, 200),
-                       np.linspace(1e-3, 7e-4, 100),
-                       np.linspace(7e-4, 1e-3, 100)))
+    s_arr = np.hstack((np.linspace(0, 1e-3, 10),
+                       np.linspace(1e-3, 7e-4, 10),
+                       np.linspace(7e-4, 1.5e-3, 10),
+                       np.linspace(-1.5e-3, 7e-4, 10),
+                       np.linspace(7e-4, 2.0e-3, 10),
+                       ))
 #     s_arr = np.linspace(0, 1e-3, 200)
     # arrays to store the values
     # nominal stress
@@ -37,31 +40,31 @@ def get_bond_slip():
     # damage function
     f_damage = lambda Yw: 1 - 1. / (1 + Ad * (Yw - Y0))
     # Kinematic hardening modulus [MPa]
-    gamma = 2e6
-    X = lambda alpha: gamma * alpha
-    # constant in the sliding threshold function
-    tau_pi_bar = 0.0
+    gamma = 2e5
+    # constant in the sliding threshold functio
+    tau_pi_bar = 1
     # parameter in the sliding potential
-    a = 0.1
+    a = 2
 
     # state variables
     tau = 0.
-    tau_pi = 0.
+    tau_pi = 1e-10
     alpha = 0.
     z = 0.
-    s = 0.  # total slip
+    s_n = 0.  # total slip
     s_pi = 0.  # sliding slip
     w = 0.  # damage
+    X = gamma * alpha
 
     # value of sliding threshold function at previous step
-    f_pi_old = -tau_pi_bar
+    f_pi = -tau_pi_bar
     # value of sliding stress at previous step
-    tau_pi_old = 0.
 
     for i in range(1, len(s_arr)):
+        print 'increment', i
         d_s = s_arr[i] - s_arr[i - 1]
-        s += d_s
-        Yw = 0.5 * G * s ** 2
+        s_n1 = s_n + d_s
+        Yw = 0.5 * G * s_n1 ** 2
 
         # damage threshold function
         fw = Yw - (Y0 + Z(z))
@@ -70,30 +73,47 @@ def get_bond_slip():
             w = f_damage(Yw)
             z = -w
 
-        # trial sliding stress
-        tau_pi_trial = w * G * (s - s_pi)
-        # sliding threshold function
-        f_pi = np.abs(tau_pi_trial - X(alpha)) - tau_pi_bar
-        # in case sliding is activated
-        if f_pi > 1e-8:
-            d_lam_pi =  f_pi_old / \
-                (w * G + gamma * -np.sign(tau_pi_old - X(alpha))
-                 * (a * X(alpha) - np.sign(tau_pi_old - X(alpha))))
+            tau_pi_trial = w * G * (s_n1 - s_pi)
 
-            # update sliding and alpha
-            s_pi += d_lam_pi * np.sign(tau_pi_old - X(alpha))
-            alpha += d_lam_pi * (a * X(alpha) - np.sign(tau_pi_old - X(alpha)))
+            f_pi = np.fabs(tau_pi_trial - X) - tau_pi_bar
+            while True:
+                # sliding threshold function
+                print 'iteration'
+                d_f_pi_tau = np.sign(tau_pi_trial - X)
+                d_f_pi_X = -np.sign(tau_pi_trial - X)
+                d_phi_pi_tau = d_f_pi_tau
+                d_phi_pi_X = d_f_pi_X + a * X
+
+                d_lam_pi = f_pi / \
+                    (w * G * d_f_pi_tau * d_phi_pi_tau -
+                     gamma * d_f_pi_X * d_phi_pi_X
+                     )
+
+                d_s_pi = d_lam_pi * d_phi_pi_tau
+                d_alpha = d_lam_pi * d_phi_pi_X
+                d_tau_pi = -w * G * d_s_pi
+                d_X = gamma * d_alpha
+
+                # update sliding and alpha
+                s_pi += d_s_pi
+                alpha += d_alpha
+                tau_pi += d_tau_pi
+                X += d_X
+
+                # update the threshold value
+                f_pi = np.fabs(tau_pi - X) - tau_pi_bar
+                if f_pi < 1e-6:
+                    break
 
         # update all the state variables
-        tau = (1 - w) * G * s + w * G * (s - s_pi)
+        tau = (1 - w) * G * s_n1 + tau_pi
         tau_arr[i] = tau
-        tau_pi = w * G * (s - s_pi)
         tau_pi_arr[i] = tau_pi
         w_arr[i] = w
         s_pi_arr[i] = s_pi
 
-        tau_pi_old = tau_pi
-        f_pi_old = np.abs(tau_pi - X(alpha)) - tau_pi_bar
+#         tau_pi_old = tau_pi
+#         f_pi_old = np.abs(tau_pi - X(alpha)) - tau_pi_bar
 
     return s_arr, tau_arr, tau_pi_arr, w_arr, s_pi_arr
 
