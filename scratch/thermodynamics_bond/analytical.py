@@ -39,7 +39,7 @@ def get_bond_slip():
     Ad = 0.5
     # Kinematic hardening modulus [MPa]
     gamma = 0
-    # constant in the sliding threshold functio
+    # constant in the sliding threshold function
     tau_pi_bar = 10
 
     Z = lambda z: 1. / Ad * (-z) / (1 + z)
@@ -63,7 +63,7 @@ def get_bond_slip():
         ds_i = s_i - s_arr[i - 1]
         Yw_i = 0.5 * G * s_i ** 2
         # damage threshold function
-        Ypi_i = 0.5 * G * (s_i - xs_pi_i)**2
+        Ypi_i = 0.5 * G * (s_i - xs_pi_i) ** 2
         Y_i = Yw_i + Ypi_i
         fw = Y_i - (Y0 + Z(z_i))
         # in case damage is activated

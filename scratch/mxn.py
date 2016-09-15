@@ -13,7 +13,7 @@ eps_cu = -0.2  # the minimum matrix strain
 # material law - matrix
 Sig = lambda eps: E * eps * (eps >= eps_cu) * (eps <= 0.0)
 # material law - reinforcement
-eps_u_r = 0.3
+eps_u_r = 0.2
 Sig_reinf = lambda eps: 500. * eps * \
     (eps >= -eps_u_r * 1.05) * (eps <= eps_u_r * 1.05)
 
@@ -129,9 +129,10 @@ for i in np.arange(len(eps_arr[0])):
 
     N_arr[i] = result[0]
     M_arr[i] = result[1]
-#     print result[1]
 
-# print np.where(np.abs(M_arr + 78.94480586) < 1.)
+N_arr = N_arr * 1000.
+M_arr = M_arr * 1000.
+
 
 N, M, strain_y, stress_y, strain_r, stress_r = get_NM(
     eps_arr[0][0], eps_arr[1][0])
@@ -151,12 +152,16 @@ for i, stress in enumerate(stress_r):
 ax3 = plt.subplot(223)
 ax3.plot(-eps_arr, [0, height], 'k-')
 l, = ax3.plot(-eps_arr.T[0], [0, height], 'r')
+ax3.set_xlabel('strain')
+ax3.set_xlabel('Height [m]')
 
 ax4 = plt.subplot(224)
 ax4.plot(-M_arr, -N_arr, lw=2)
 p, = ax4.plot(-M_arr[0], -N_arr[0], 'ro')
 ax4.axhline(0, color='k')
 ax4.axvline(0, color='k')
+ax4.set_xlabel('moment [kN.m]')
+ax4.set_ylabel('force [kN]')
 
 ax = plt.axes([0.10, 0.015, 0.80, 0.02])
 
