@@ -82,7 +82,10 @@ def rho_5(xi, theta):
     return r * fcu
 
 
-xi, theta = np.mgrid[-5:1:100j, 0:np.pi / 3:20j]
+x_lower_limit = -10.
+x_upper_limit = 1.
+
+xi, theta = np.mgrid[x_lower_limit:x_upper_limit:100j, 0:np.pi / 3:20j]
 
 # the symmetry of the yielding surface (0<theta<pi/3)
 theta = np.hstack(
@@ -92,7 +95,7 @@ r = rho_3(xi, theta)
 r[r < 0] = 0
 
 # the actual coordinates in Haigh-Westergaard coordinates
-xi, theta = np.mgrid[-5:1:100j, 0:2 * np.pi:120j]
+xi, theta = np.mgrid[x_lower_limit:x_upper_limit:100j, 0:2 * np.pi:120j]
 
 sig1 = 1 / np.sqrt(3) * xi + np.sqrt(2. / 3.) * r * np.cos(theta)
 sig2 = 1 / np.sqrt(3) * xi + np.sqrt(2. / 3.) * r * -np.sin(np.pi / 6 - theta)

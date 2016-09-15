@@ -29,7 +29,7 @@ if __name__ == '__main__':
     phi = np.pi / 4
     theta = np.pi / 4
 
-    n = 32
+    n = 16
     i_arr = np.arange(-n / 2 + 3, n - 1, 2)
     alpha_arr = i_arr * np.pi / n
 
