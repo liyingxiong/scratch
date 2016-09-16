@@ -20,7 +20,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
 
-    phi_fn = PhiFnStrainSoftening(Epp=1e-4, Efp=2e-4, h=0.001)
+    phi_fn = PhiFnStrainSoftening(Epp=59e-6, Efp=250e-6, h=0.01)
     mats_eval = MATS3DMicroplaneDamage(
         nu=0.3, phi_fn=phi_fn, regularization=False)
     mats_eval.regularization = False
@@ -36,9 +36,10 @@ if __name__ == '__main__':
 
     # discretization with Haigh-Westergaard coordinates
     from Haigh_Westergaard_Cartesian_Spherical import haigh_westergaard_to_cartesian, cartesian_to_spherical
-#     xi, theta = np.mgrid[-0.5:1:8j, 0:2 * np.pi:30j]
+    xi, theta = np.mgrid[-0.50:1:8j, 0:2 * np.pi:19j]
+    theta += 0.01
 #     xi, theta = np.mgrid[-0.5:1:8j, -np.pi / 6.:np.pi / 6.:5j]
-    xi, theta = np.mgrid[-0.5:1:8j, 4 * np.pi / 3.:6 * np.pi / 3.:10j]
+#     xi, theta = np.mgrid[-0.5:1:8j, 0:np.pi / 3. - 0.01:8j]
     rho = np.sqrt(1 - xi ** 2)
     x, y, z = haigh_westergaard_to_cartesian(xi, rho, theta)
     r, theta, phi = cartesian_to_spherical(x, y, z)
@@ -49,12 +50,17 @@ if __name__ == '__main__':
     sig2_max = []
     sig3_max = []
 
+    eps1_max = []
+    eps2_max = []
+    eps3_max = []
+
     from mayavi import mlab
     mlab.figure(1, fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
 
     for i in np.arange(len(theta)):
 
         explorer = MATSExplore(dim=MATS3DExplore(mats_eval=mats_eval))
+        explorer.tloop.tolerance = 1e-5
         bc_proportional = explorer.tloop.tstepper.bcond_mngr.bcond_list[0]
         bc_proportional.phi = phi[i]
         bc_proportional.theta = theta[i]
@@ -79,13 +85,21 @@ if __name__ == '__main__':
         sig2_max.append(sig2[idx])
         sig3_max.append(sig3[idx])
 
+        eps1_max.append(eps1[idx])
+        eps2_max.append(eps2[idx])
+        eps3_max.append(eps3[idx])
+
         mlab.plot3d(sig1, sig2, sig3)
 
     l = 8
-    k = 10
+    k = 19
     sig1_max_arr = np.reshape(sig1_max, (l, k))
     sig2_max_arr = np.reshape(sig2_max, (l, k))
     sig3_max_arr = np.reshape(sig3_max, (l, k))
+
+    eps1_max_arr = np.reshape(eps1_max, (l, k))
+    eps2_max_arr = np.reshape(eps2_max, (l, k))
+    eps3_max_arr = np.reshape(eps3_max, (l, k))
 
 #     pts = mlab.points3d(sig1_max, sig2_max, sig3_max, np.sqrt(
 #         np.array(sig1_max) ** 2 + np.array(sig2_max) ** 2 + np.array(sig3_max) ** 2), opacity=0)
@@ -95,4 +109,9 @@ if __name__ == '__main__':
 
     mlab.axes(s)
 
+    mlab.figure(2, fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
+
+    e = mlab.mesh(eps1_max_arr, eps2_max_arr, eps3_max_arr)
+
+    mlab.axes(e)
     mlab.show()
