@@ -9,19 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def get_bond_slip():
+def get_bond_slip(s_arr, tau_pi_bar=10, Ad=0.5, s0=5e-3, G=36000.0):
     '''for plotting the bond slip relationship
     '''
-#    s_levels = np.linspace(0, 100e-3, 100)
-    s_levels = np.linspace(10e-3, 10e-3, 10)
-    s_levels[0] = 0
-    s_levels.reshape(-1, 2)[:, 0] *= -1
-    s_history = s_levels.flatten()
-
-    # slip array as input
-    s_arr = np.hstack([np.linspace(s_history[i], s_history[i + 1], 30)
-                       for i in range(len(s_levels) - 1)])
-
     # arrays to store the values
     # nominal stress
     tau_arr = np.zeros_like(s_arr)
@@ -34,17 +24,17 @@ def get_bond_slip():
 
     # material parameters
     # shear modulus [MPa]
-    G = 36000.0
+    G = G
     # damage - brittleness [MPa^-1]
-    Ad = 0.5
+    Ad = Ad
     # Kinematic hardening modulus [MPa]
     gamma = 0
     # constant in the sliding threshold function
-    tau_pi_bar = 10
+    tau_pi_bar = tau_pi_bar
 
     Z = lambda z: 1. / Ad * (-z) / (1 + z)
     # damage - Threshold
-    s0 = 5e-3
+    s0 = s0
     Y0 = 0.5 * G * s0 ** 2
     # damage function
     f_damage = lambda Yw: 1 - 1. / (1 + Ad * (Yw - Y0))
@@ -89,30 +79,42 @@ def get_bond_slip():
 
     return s_arr, tau_arr, tau_pi_arr, w_arr, xs_pi_arr
 
-s_arr, tau_arr, tau_pi_arr, w_arr, xs_pi_arr = get_bond_slip()
-plt.subplot(221)
-plt.plot(s_arr, tau_arr)  # , label='stress')
-plt.plot(s_arr, tau_pi_arr)  # , label='sliding stress')
-plt.xlabel('slip')
-plt.ylabel('stress')
-plt.legend()
-plt.subplot(222)
-plt.plot(s_arr, w_arr)
-plt.ylim(0, 1)
-plt.xlabel('slip')
-plt.ylabel('damage')
-plt.subplot(223)
-#plt.plot(s_arr, s_pi_arr)
-plt.plot(s_arr, xs_pi_arr, label='spi2')
-plt.xlabel('slip')
-plt.ylabel('sliding slip')
-plt.legend()
-plt.subplot(224)
-plt.plot(s_arr[:-1], np.sign(
-    (s_arr[1:] - s_arr[:--1]) * xs_pi_arr[1:]), label='spi2')
-plt.ylim(-1.5, 1.5)
-plt.xlabel('slip')
-plt.ylabel('sliding slip')
-plt.legend()
-# plt.ylim(s_arr[0], s_arr[-1])
-plt.show()
+if __name__ == '__main__':
+    s_levels = np.linspace(0, 100e-3, 100)
+#     s_levels = np.linspace(10e-3, 10e-3, 10)
+    s_levels[0] = 0
+    s_levels.reshape(-1, 2)[:, 0] *= -1
+    s_history = s_levels.flatten()
+
+    # slip array as input
+    s_arr = np.hstack([np.linspace(s_history[i], s_history[i + 1], 30)
+                       for i in range(len(s_levels) - 1)])
+
+    s_arr, tau_arr, tau_pi_arr, w_arr, xs_pi_arr = get_bond_slip(
+        s_arr, tau_pi_bar=5, Ad=0.05, s0=5e-3, G=6000)
+    plt.subplot(221)
+    plt.plot(s_arr, tau_arr)  # , label='stress')
+    plt.plot(s_arr, tau_pi_arr)  # , label='sliding stress')
+    plt.xlabel('slip')
+    plt.ylabel('stress')
+    plt.legend()
+    plt.subplot(222)
+    plt.plot(s_arr, w_arr)
+    plt.ylim(0, 1)
+    plt.xlabel('slip')
+    plt.ylabel('damage')
+    plt.subplot(223)
+    #plt.plot(s_arr, s_pi_arr)
+    plt.plot(s_arr, xs_pi_arr, label='spi2')
+    plt.xlabel('slip')
+    plt.ylabel('sliding slip')
+    plt.legend()
+    plt.subplot(224)
+    plt.plot(s_arr[:-1], np.sign(
+        (s_arr[1:] - s_arr[:--1]) * xs_pi_arr[1:]), label='spi2')
+    plt.ylim(-1.5, 1.5)
+    plt.xlabel('slip')
+    plt.ylabel('sliding slip')
+    plt.legend()
+    # plt.ylim(s_arr[0], s_arr[-1])
+    plt.show()
