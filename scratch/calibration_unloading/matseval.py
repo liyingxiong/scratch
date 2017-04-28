@@ -29,7 +29,7 @@ class MATSEval(HasTraits):
     E_f = Float(170000, tooltip='Stiffness of the fiber [MPa]',
                 auto_set=False, enter_set=False)
 
-    E_b = Float(5000,
+    E_b = Float(20000,
                 tooltip='Bond stiffness [N/mm]')
 
     sigma_y = Float(53.0354,
@@ -38,13 +38,13 @@ class MATSEval(HasTraits):
                     enter_set=True,
                     auto_set=False)
 
-    K_bar = Float(0.,  # 191e-6,
+    K_bar = Float(35.,  # 191e-6,
                   label="K",
                   desc="Plasticity modulus",
                   enter_set=True,
                   auto_set=False)
 
-    H_bar = Float(40.,  # 191e-6,
+    H_bar = Float(22.,  # 191e-6,
                   label="H",
                   desc="Hardening modulus",
                   enter_set=True,
@@ -98,9 +98,11 @@ class MATSEval(HasTraits):
     def get_bond_slip(self):
         '''for plotting the bond slip relationship
         '''
-        s_arr = np.hstack((np.linspace(0, 4, 200),
-                           np.linspace(4., 3.95, 10),
-                           np.linspace(3.95, 6.5, 100)))
+        s_arr = np.hstack((np.linspace(0, 2, 200),
+                           np.linspace(2, 1, 200),
+                           np.linspace(1, 4, 200),
+                           np.linspace(4., 3, 100),
+                           np.linspace(3, 6, 200)))
 #         s_arr = np.linspace(0, 6.5, 100)
         sig_e_arr = np.zeros_like(s_arr)
         sig_n_arr = np.zeros_like(s_arr)
@@ -142,9 +144,14 @@ if __name__ == '__main__':
     slip, sig_n_arr, sig_e_arr, w_arr = mat.get_bond_slip()
     fig, ax1 = plt.subplots()
     plt.plot(slip, sig_n_arr)
-    plt.plot(slip, sig_e_arr, '--')
-    ax2 = ax1.twinx()
-    plt.plot(slip, w_arr, '--')
-    plt.ylim(0, 1)
-    plt.title('bond-slip law')
+#     plt.plot(slip, sig_e_arr, '--')
+#     ax2 = ax1.twinx()
+#     plt.plot(slip, w_arr, '--')
+#     plt.ylim(0, 1)
+#     plt.title('bond-slip law')
+    plt.show()
+
+    plt.figure()
+    kappa_arr = np.linspace(0, 6, 100)
+    plt.plot(kappa_arr, mat.g(kappa_arr))
     plt.show()

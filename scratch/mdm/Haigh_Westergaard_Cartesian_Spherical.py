@@ -7,6 +7,11 @@ import numpy as np
 
 # Cartesian coordinates
 
+# def cartesian_to_haigh_westergaard(x, y, z):
+#     xi = x*np.sqrt(3.)/3. + y*np.sqrt(3.)/3. + z*np.sqrt(3.)/3.
+#     rho = np.sqrt(x**2 + y**2 + z**2 - xi**2)
+#     theta =
+
 
 def haigh_westergaard_to_cartesian(xi, rho, theta):
     z = 1 / np.sqrt(3) * xi + np.sqrt(2. / 3.) * rho * np.cos(theta)

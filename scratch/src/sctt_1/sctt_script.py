@@ -4,28 +4,30 @@ from scipy.optimize import brentq, newton
 from matplotlib import pyplot as plt
 from stats.misc.random_field.random_field_1D import RandomField
 random_field = RandomField(seed=False,
-                           lacor=2.,
-                           length=200,
-                           nx=1000,
+                           lacor=5.,
+                           length=3000,
+                           nx=3000,
                            nsim=1,
                            loc=.0,
-                           shape=10.,
+                           shape=20.,
                            scale=4.0,
                            distr_type='Weibull')
 
 #=========================================================================
 # Crack bridge model
 #=========================================================================
-T = 12.  # [MPa]
+T = 10.  # [MPa]
 E_m = 25e+3  # [MPa]
-E_f = 180e+3  # [MPa]
-v_f = 0.01  # [-]
-sig_fu = 1.0e+3  # [MPa]
+E_f = 200e+3  # [MPa]
+v_f = 0.05  # [-]
+sig_fu = 4.0e+2  # [MPa]
 eps_fu = sig_fu / E_f  # ultimate fiber strain
 sig_cu = sig_fu * v_f  # ultimate composite stress
 
-n_z = 1000
-n_sig_c = 1000
+print sig_cu
+
+n_z = 400
+n_sig_c = 100
 # local spatial coordinate
 cb_z = np.linspace(0, 100, n_z)
 # define the range of load levels
@@ -48,8 +50,8 @@ get_eps_f_z = interp2d(cb_z, cb_sig_c, cb_eps_f, kind='linear')
 #=========================================================================
 # Fragmentation process
 #=========================================================================
-n_x = 1000  #
-L = 400.0  # length - mm
+n_x = 3000  #
+L = 3000.0  # length - mm
 x = np.linspace(0, L, n_x)
 # sig_mu_x = np.linspace(3.0, 4.5, n_x)
 sig_mu_x = random_field.random_field
@@ -175,6 +177,7 @@ def get_sig_m_x(sig_c, z_x):
     sig_m[z_x_map] = get_sig_m_z(z_x[z_x_map], sig_c)
     return sig_m
 
+
 if True:
     sig_c_i, z_x_i, y_i = get_cracking_history()
     eps_c_i = get_eps_c_i(sig_c_i, z_x_i)
@@ -182,51 +185,88 @@ if True:
     load_arr = np.unique(np.hstack((np.linspace(0, 3., 20), load_arr)))
     load_arr = np.unique(np.hstack((np.linspace(3., 4., 50), load_arr)))
 
-    eps = np.zeros_like(load_arr)
-    for i, load in enumerate(load_arr):
+#     eps = np.zeros_like(load_arr)
+#     for i, load in enumerate(load_arr):
+#         idx = np.searchsorted(sig_c_i, load)
+#         z_x = z_x_i[idx]
+#         sig_m = get_sig_m_x(load, z_x)
+#         eps[i] = np.trapz(get_eps_f_x(load, z_x), x) / L
+#
+#         plt.cla()
+#         plt.plot(x, sig_mu_x, 'g', lw=1.5, label='matrix strength')
+#         plt.plot(x, sig_m, 'k', lw=1, label='matrix stress')
+#         plt.ylim(0, 1.2 * np.amax(sig_mu_x))
+#         savepath = 'D:\cracking history\\1\\load_step' + str(load) + '.pdf'
+#         plt.legend(loc='best', ncol=2)
+#         plt.savefig(savepath, format='pdf')
+
+    def get_crack_opening_load(z_x_i, y_i, load):
         idx = np.searchsorted(sig_c_i, load)
         z_x = z_x_i[idx]
-        sig_m = get_sig_m_x(load, z_x)
-        eps[i] = np.trapz(get_eps_f_x(load, z_x), x) / L
+        eps_m_x = get_sig_m_x(load, z_x) / E_m
+        eps_f_x = get_eps_f_x(load, z_x)
+        y = x[z_x == 0]
+        distance = np.abs(x[:, np.newaxis] - y[np.newaxis, :])
+        nearest_crack = y[np.argmin(distance, axis=1)]
+        w_arr = np.array([np.trapz((eps_f_x[nearest_crack == y_i] -
+                                    eps_m_x[nearest_crack == y_i]),
+                                   x[nearest_crack == y_i])
+                          for y_i in y])
+        return w_arr
 
-        plt.cla()
-        plt.plot(x, sig_mu_x, 'g', lw=1.5, label='matrix strength')
-        plt.plot(x, sig_m, 'k', lw=1, label='matrix stress')
-        plt.ylim(0, 1.2 * np.amax(sig_mu_x))
-        savepath = 'D:\cracking history\\1\\load_step' + str(i + 1) + '.png'
-        plt.legend(loc='best', ncol=2)
-        plt.savefig(savepath)
-
-    for i, load in enumerate(load_arr):
-
-        plt.cla()
-        plt.plot(eps, load_arr)
-        plt.plot(eps_c_i[sig_c_i <= load], sig_c_i[sig_c_i <= load], 'ko')
-        plt.plot(eps[i], load, 'ro')
-        savepath = 'D:\cracking history\\1\\global' + str(i + 1) + '.png'
-        plt.savefig(savepath)
+    print get_crack_opening_load(z_x_i, y_i, 7.)
+    print get_crack_opening_load(z_x_i, y_i, 10.)
+    print get_crack_opening_load(z_x_i, y_i, 15.)
 
     plt.cla()
-    plt.plot((0, L), (0, 0), 'k', lw=2)
-    plt.plot((0, L), (80, 80), 'k', lw=2)
-    plt.plot((0, 0), (0, 80), 'k', lw=2)
-    plt.plot((L, L), (0, 80), 'k', lw=2)
+    plt.hist(get_crack_opening_load(z_x_i, y_i, 7.)
+             * 1000, bins=20, range=(0, 18), color='0.3')
+    plt.hist(get_crack_opening_load(z_x_i, y_i, 10.)
+             * 1000, bins=20, range=(0, 18), color='0.5')
+    plt.hist(get_crack_opening_load(z_x_i, y_i, 15.)
+             * 1000, bins=20, range=(0, 18), color='0.8')
+    plt.show()
 
-    idx = 0
-    for i, load in enumerate(load_arr):
-        y = np.linspace(0, 80, 10)
-        idx_old = idx
-        idx = np.searchsorted(sig_c_i, load)
-        if idx <> idx_old:
-            x_co = y_i[idx - 1] + 3. * (np.random.random(10) - 0.5)
-            plt.plot(x_co, y, lw=2, color='0.7')
 
-        plt.xlim((-100, 500))
-        plt.ylim((-100, 500))
+plt.cla()
+eps_c_u = np.trapz(get_eps_f_x(sig_cu, z_x_i[-1]), x) / L
+plt.plot(np.hstack([0, eps_c_i, eps_c_u]), np.hstack([0, sig_c_i, sig_cu]))
+plt.plot(np.interp(7, np.hstack([0, sig_c_i, sig_cu]), np.hstack(
+    [0, eps_c_i, eps_c_u])), 7, marker='o', color='0.3')
+plt.plot(np.interp(10, np.hstack([0, sig_c_i, sig_cu]), np.hstack(
+    [0, eps_c_i, eps_c_u])), 10, marker='o', color='0.5')
+plt.plot(np.interp(15, np.hstack([0, sig_c_i, sig_cu]), np.hstack(
+    [0, eps_c_i, eps_c_u])), 15, marker='o', color='0.8')
 
-        savepath = 'D:\cracking history\\1\\crack' + str(i + 1) + '.png'
-        plt.savefig(savepath)
-
+#     for i, load in enumerate(load_arr):
+#
+#         plt.cla()
+#         plt.plot(eps, load_arr)
+#         plt.plot(eps_c_i[sig_c_i <= load], sig_c_i[sig_c_i <= load], 'ko')
+#         plt.plot(eps[i], load, 'ro')
+#         savepath = 'D:\cracking history\\1\\global' + str(i + 1) + '.png'
+#         plt.savefig(savepath)
+#
+#     plt.cla()
+#     plt.plot((0, L), (0, 0), 'k', lw=2)
+#     plt.plot((0, L), (80, 80), 'k', lw=2)
+#     plt.plot((0, 0), (0, 80), 'k', lw=2)
+#     plt.plot((L, L), (0, 80), 'k', lw=2)
+#
+#     idx = 0
+#     for i, load in enumerate(load_arr):
+#         y = np.linspace(0, 80, 10)
+#         idx_old = idx
+#         idx = np.searchsorted(sig_c_i, load)
+#         if idx <> idx_old:
+#             x_co = y_i[idx - 1] + 3. * (np.random.random(10) - 0.5)
+#             plt.plot(x_co, y, lw=2, color='0.7')
+#
+#         plt.xlim((-100, 500))
+#         plt.ylim((-100, 500))
+#
+#         savepath = 'D:\cracking history\\1\\crack' + str(i + 1) + '.png'
+#         plt.savefig(savepath)
 
 #     plt.subplot(2, 2, 1)
 #     plt.plot(eps_c_i, sig_c_i)
@@ -248,4 +288,4 @@ if True:
 #     plt.ylim(ymin=0.0)
 #     plt.axis('off')
 
-    plt.show()
+plt.show()

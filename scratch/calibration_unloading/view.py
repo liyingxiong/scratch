@@ -234,7 +234,7 @@ if __name__ == '__main__':
 #     d_array = np.array(
 #         [0., 5910., 1440.])
     d_array = np.array(
-        [0., 1.04, 0.99, 2.01, 1.93, 3.02, 2.90, 4.03, 3.86, 5.5])
+        [0., 1.04, 0.98, 2.01, 1.93, 3.02, 2.905, 4.03, 3.875, 5.5])
 
     dd_arr = np.abs(np.diff(d_array))
     x = np.hstack((0, np.cumsum(dd_arr) / sum(dd_arr)))
@@ -248,13 +248,14 @@ if __name__ == '__main__':
 #     U_record, F_record, sf_record, t_record, eps_record, sig_record = tl.eval()
 #
 #     plt.plot(U_record[:, n_dofs - 1],
-#              F_record[:, n_dofs - 1], marker='.')
+#              F_record[:, n_dofs - 1], 'k', alpha=0.5)
 #     plt.xlabel('displacement')
 #     plt.ylabel('force')
 #     fpath = 'D:\\data\\pull_out\\all\\DPO-20cm-0-3300SBR-V3_R3_f.asc'
 #     d, f = np.loadtxt(fpath,  delimiter=';')
-#     plt.plot(d[d <= 11.] / 2., f[d <= 11.] * 1000.)
-#
+#     plt.plot(d[d <= 11.] / 2., f[d <= 11.] * 1000., 'k--')
+#     plt.xlim(0,)
+#     plt.ylim(0,)
 #     plt.show()
 
     window = Mainwindow(mats_eval=ts.mats_eval,

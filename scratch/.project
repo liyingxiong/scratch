@@ -4,6 +4,7 @@
 	<comment></comment>
 	<projects>
 		<project>cbfe</project>
+		<project>debontrix</project>
 		<project>etsproxy</project>
 		<project>quaducom</project>
 		<project>sctt</project>

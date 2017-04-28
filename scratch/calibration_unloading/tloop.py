@@ -96,7 +96,7 @@ if __name__ == '__main__':
     print 'time consumed', t.time() - t1
 
     plt.plot(U_record[:, n_dofs - 1],
-             F_record[:, n_dofs - 1], marker='.')
+             F_record[:, n_dofs - 1], )
     plt.xlabel('displacement')
     plt.ylabel('force')
     fpath = 'D:\\data\\pull_out\\all\\DPO-20cm-0-3300SBR-V3_R3_f.asc'
