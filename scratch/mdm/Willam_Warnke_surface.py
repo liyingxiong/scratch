@@ -92,7 +92,7 @@ if __name__ == '__main__':
     theta = np.hstack(
         (theta, theta[:, ::-1], theta, theta[:, ::-1], theta, theta[:, ::-1]))
     xi = np.hstack((xi, xi, xi, xi, xi, xi))
-    r = rho_5(xi, theta)
+    r = rho_3(xi, theta)
     r[r < 0] = 0
 
     # the actual coordinates in Haigh-Westergaard coordinates
